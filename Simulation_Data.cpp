@@ -246,16 +246,16 @@ void DetermineLatPosValue(double * double_value)
 	if (DataMap[VehicleID].level_shift == Human_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = DataMap[VehicleID].LateralDeviation();
+			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)/current_velocity;
 		else
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation()) / 10;
+			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 10 - lateral_position)/current_velocity;
 	}
 	else if (DataMap[VehicleID].level_shift == Automated_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation()) / 10;
+			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 10 - lateral_position) / current_velocity;
 		else
-			*double_value = DataMap[VehicleID].Random_value = DataMap[VehicleID].LateralDeviation();
+			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) / current_velocity;
 	}
 
 }
