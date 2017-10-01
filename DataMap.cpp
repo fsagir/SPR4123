@@ -25,6 +25,7 @@ void DataSetValue(long   type,
 	double double_value,
 	char   *string_value)
 {
+	//This value is the vehicleID
 	static long VehicleID = 0;
 
 	//For each peice of vehicle data provided by visim (often in real time), update our assosiative array
