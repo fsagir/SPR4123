@@ -49,8 +49,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 {
 	/* Gets the value of a data object of type <type>, selected by <index1> */
 	/* and possibly <index2>, and writes that value to <*double_value>,     */
-	/* <*float_value> or <**string_value> (object and value selection       */
-	/* depending on <type>).                                                */
+	/* <*float_value> or <**string_value> (object and value selection depending on <type>).       */
 	/* Return value is 1 on success, otherwise 0.                           */
 
 
