@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{20c529ed-eb2e-47c5-95e0-553f6c93c0a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{9f57b16c-2a15-4c6b-837b-b1e336497528}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Vehicle_data.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Simulation_Data.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(solutiondir)DriverModel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\DataMap.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Simulation_Data.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SAE_CPP\DriverModel_SAE_1.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\IDM_acc.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
