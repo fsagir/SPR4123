@@ -43,7 +43,7 @@ void DataSetValue(long   type,
 		DataMap[VehicleID].level_shift = Automated_Control;
 		break;
 #endif
-		if ((x_coordinate > 700) && (x_coordinate < 1000))
+		if ((x_coordinate > -4000) && (x_coordinate < -3200))
 		{
 			DataMap[VehicleID].level_shift = Human_Control;
 			break;
@@ -55,13 +55,13 @@ void DataSetValue(long   type,
 			break;
 		}
 #else
-		if (DataMap[VehicleID].level_shift == Automated_Control && DataMap[VehicleID].current_velocity > 15.65)
+		if (DataMap[VehicleID].level_shift == Automated_Control && DataMap[VehicleID].current_velocity > 17.9)
 		{
 			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + reaction_time;
 			DataMap[VehicleID].level_shift = Human_Control;
 		}
-		//check to see if we are under human control and below 15.65 speed limit
-		if (DataMap[VehicleID].level_shift == Human_Control && DataMap[VehicleID].current_velocity < 15.65)
+		//check to see if we are under human control and below 17.9 m/s speed limit
+		if (DataMap[VehicleID].level_shift == Human_Control && DataMap[VehicleID].current_velocity < 17.9)
 		{
 			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + 2 * reaction_time;
 			DataMap[VehicleID].level_shift = Automated_Control;

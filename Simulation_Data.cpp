@@ -151,10 +151,10 @@ void CalculateAccChange(double * double_value)
 	/* Calculation of IDM acceleration - SAE Level 0 */
 
 	space_headway = relative_distance - vehicle_length;
-	//if (cur_link != 7) {
+	if (cur_link != 7) {
 
-	//	desired_velocity = 12.5 + (desired_velocity - 24.44) / 12.5 * (24.44-12.5);
-	//}
+	desired_velocity = 11.2 + (desired_velocity - 24.4) / (36.12 -24.4) * (15.6-11.2);
+	}
 	ratio = current_velocity / desired_velocity;
 	desired_space_headway = jam_distance + current_velocity * time_headway + 0.5 * current_velocity * relative_velocity / sqrt(a * b);
 	space_ratio = desired_space_headway / space_headway;
