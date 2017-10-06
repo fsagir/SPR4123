@@ -222,7 +222,10 @@ void CalculateAccChange(double * double_value)
 //Function to detirmine acceleration value
 void DetrimeAccValue(double * double_value)
 {
-
+	if (VehicleID < 10 || (VehicleID > 150 && VehicleID < 160))
+	{
+		StoreSituationData(VehicleID);
+	}
 	if (DataMap[VehicleID].level_shift == Human_Control)
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
@@ -246,16 +249,18 @@ void DetermineLatPosValue(double * double_value)
 	if (DataMap[VehicleID].level_shift == Human_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)/current_velocity;
+			//*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2/current_velocity;
+			*double_value = desired_lane_angle;
 		else
-			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 10 - lateral_position)/current_velocity;
+			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2/current_velocity;
 	}
 	else if (DataMap[VehicleID].level_shift == Automated_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 10 - lateral_position) / current_velocity;
+			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2 / current_velocity;
 		else
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) / current_velocity;
+			//*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2 / current_velocity;
+			*double_value = desired_lane_angle;
 	}
 
 }
@@ -522,7 +527,7 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		if (vehicle_X_coordinate_array.size() < vehicle_identity + 1)
 			vehicle_X_coordinate_array.resize(vehicle_identity + 1);
 		vehicle_X_coordinate_array[vehicle_identity] = double_value;
-		if (double_value > -760 && double_value < 1550)
+		if (double_value > -7200 && double_value < -5000)
 			StoreVehicleFrame(DataMap[VehicleID]);
 		if (double_value >= 10)
 		{

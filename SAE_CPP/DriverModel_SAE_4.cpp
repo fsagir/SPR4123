@@ -72,10 +72,11 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
       *long_value = 1;
       return 1;
     case DRIVER_DATA_DESIRED_ACCELERATION :
-    	
+		//*double_value = desired_acceleration;
 		CalculateAccChange(double_value);
 		return 1;
     case DRIVER_DATA_DESIRED_LANE_ANGLE :
+		//*double_value = desired_lane_angle;
 		DetermineLatPosValue(double_value);
 		return 1;
     case DRIVER_DATA_ACTIVE_LANE_CHANGE :

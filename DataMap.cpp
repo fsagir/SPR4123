@@ -43,7 +43,7 @@ void DataSetValue(long   type,
 		DataMap[VehicleID].level_shift = Automated_Control;
 		break;
 #endif
-		if ((x_coordinate > -4000) && (x_coordinate < -3200))
+		if ((x_coordinate > -6400) && (x_coordinate < -5600))
 		{
 			DataMap[VehicleID].level_shift = Human_Control;
 			break;
@@ -208,7 +208,7 @@ void StoreVehicleFrame(VehicleData & DataPoint)
 		/*if (DataPoint.Initial_link != 8) return;*/
 
 		//The following code is used for debugging file-output if we "Cannot create or open" the file
-		if (Datafile.fail())
+		if (Datafile.fail() || Datafile2.fail())
 		{
 
 			if (GetLastError() != 0)
@@ -252,9 +252,42 @@ void StoreVehicleFrame(VehicleData & DataPoint)
 		Datafile2 << output;
 		Datafile2.flush();
 
+
+		
+
+
+
 	}
 
 
+}
+
+void StoreSituationData(int Veh)
+{
+	static std::string Time = CurTime();
+	std::string data = "Vehicle";
+	data += std::to_string(Veh) + "_";
+	std::string filename3 = "C:\\DataLog\\" + std::string(data) + "_DEBUG_" + Time + ".csv";
+	std::ofstream Datafile3(filename3, std::ios_base::out | std::ios_base::app);
+	std::stringstream SS;
+	SS.str("");
+	SS << VehicleID << ','
+		<< x_coordinate << ','
+		<< current_velocity << ','
+		<< desired_velocity << ','
+		<< pow(ratio,4) << ','
+		<< pow(space_ratio,2) << ','
+		<< acc_acc << ','
+		<< acc_idm << ','
+		<< desired_space_headway << ','
+		<< relative_distance << ','
+		<< vehicle_ID << ','
+		<< DataMap[vehicle_ID].current_velocity << ','
+		<< "\n";
+
+	std::string output = SS.str();
+	Datafile3 << output;
+	Datafile3.flush();
 }
 
 
@@ -265,7 +298,7 @@ VehicleData::VehicleData() : Initial_Lane(0), Change_volume(0), lane_set(false),
 	y2 = 0;
 	y3 = 0;
 	future_lateral_position = 0;
-	level_shift = Automated_Control;
+	level_shift = Human_Control;
 	time_to_shift= 0.0;
 };
 //initialisation of static-volume property to zero.
@@ -305,7 +338,7 @@ double VehicleData::LateralDeviation()
 		I_t = 0;
 
 	future_lateral_position = Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t;
-	if (lateral_position >= 4 || lateral_position <= -4 || future_lateral_position >=4 || future_lateral_position <= -4)
+	if (lateral_position >= 1.5|| lateral_position <= -1.5 || future_lateral_position >=1.5 || future_lateral_position <= -1.5)
 		return lateral_position;
 	/*	future_lateral_position = abs((Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t)*10/current_velocity);*/
 	else 

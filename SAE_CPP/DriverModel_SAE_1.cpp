@@ -71,7 +71,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		return 1;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
 		/*RandomValue *= 100;*/
-		DetermineLatPosValue(double_value);
+		*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*10/ current_velocity;
 		//if (desired_lane_angle >= 0)
 		//{
 		//	*double_value = RandomValue;

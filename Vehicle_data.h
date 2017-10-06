@@ -57,6 +57,7 @@ extern std::map<int, VehicleData> DataMap;
 
 // Function to store the individual data of a vehicle (data is passed by reference)
 void StoreVehicleFrame(VehicleData & DataPoint);
+void StoreSituationData(int Veh);
 
 //Function to update simulation variables from VISSIM
 void DataSetValue(long   type,
