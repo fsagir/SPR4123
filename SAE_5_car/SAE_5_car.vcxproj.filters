@@ -15,30 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\DriverModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\IDM_acc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Simulation_Data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Vehicle_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Vehicle_Data_Subset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\DataMap.cpp">
+    <ClCompile Include="..\DriverModel_SAE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\IDM_acc.cpp">
+    <ClCompile Include="..\Vehicle_Calulations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Simulation_Data.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SAE_CPP\DriverModel_SAE_5.cpp">
+    <ClCompile Include="..\Vehicle_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

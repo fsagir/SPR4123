@@ -150,14 +150,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="$(solutiondir)DriverModel.h" />
-    <ClInclude Include="..\Simulation_Data.h" />
     <ClInclude Include="..\Vehicle_data.h" />
+    <ClInclude Include="..\Vehicle_Data_Subset.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\DataMap.cpp" />
-    <ClCompile Include="..\IDM_acc.cpp" />
-    <ClCompile Include="..\SAE_CPP\DriverModel_SAE_2.cpp" />
-    <ClCompile Include="..\Simulation_Data.cpp" />
+    <ClCompile Include="..\DriverModel_SAE.cpp" />
+    <ClCompile Include="..\Vehicle_Calulations.cpp" />
+    <ClCompile Include="..\Vehicle_data.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

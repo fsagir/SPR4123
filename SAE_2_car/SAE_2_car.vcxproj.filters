@@ -9,25 +9,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(solutiondir)DriverModel.h" />
     <ClInclude Include="..\Vehicle_data.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Simulation_Data.h">
+    <ClInclude Include="..\Vehicle_Data_Subset.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="$(solutiondir)DriverModel.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\DataMap.cpp">
+    <ClCompile Include="..\DriverModel_SAE.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Simulation_Data.cpp">
+    <ClCompile Include="..\Vehicle_Calulations.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\SAE_CPP\DriverModel_SAE_2.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\IDM_acc.cpp">
+    <ClCompile Include="..\Vehicle_data.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

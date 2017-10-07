@@ -18,6 +18,15 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Vehicle_data.h" />
+    <ClInclude Include="..\Vehicle_Data_Subset.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\DriverModel_SAE.cpp" />
+    <ClCompile Include="..\Vehicle_Calulations.cpp" />
+    <ClCompile Include="..\Vehicle_data.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{074F35EE-6C89-4EC4-A02B-10A845E1E6EB}</ProjectGuid>
@@ -132,18 +141,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\DataMap.cpp" />
-    <ClCompile Include="..\IDM_acc.cpp" />
-    <ClCompile Include="..\SAE_CPP\DriverModel_SAE_4.cpp" />
-    <ClCompile Include="..\Simulation_Data.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\DriverModel.h" />
-    <ClInclude Include="..\IDM_acc.h" />
-    <ClInclude Include="..\Simulation_Data.h" />
-    <ClInclude Include="..\Vehicle_data.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
