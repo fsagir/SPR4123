@@ -306,6 +306,7 @@ uint32_t VehicleData::Volume = 0;
 
 double VehicleData::LateralDeviation()
 {
+
 	//generate seed value from time
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	//seed random generator

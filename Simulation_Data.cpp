@@ -150,6 +150,7 @@ void CalculateAccChange(double * double_value)
 {
 	/* Calculation of IDM acceleration - SAE Level 0 */
 
+
 	space_headway = relative_distance - vehicle_length;
 	if (cur_link != 7) {
 
@@ -249,8 +250,8 @@ void DetermineLatPosValue(double * double_value)
 	if (DataMap[VehicleID].level_shift == Human_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			//*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2/current_velocity;
-			*double_value = desired_lane_angle;
+			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2/current_velocity;
+			//*double_value = desired_lane_angle;
 		else
 			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2/current_velocity;
 	}
@@ -259,8 +260,8 @@ void DetermineLatPosValue(double * double_value)
 		if (current_time > DataMap[VehicleID].time_to_shift)
 			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2 / current_velocity;
 		else
-			//*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2 / current_velocity;
-			*double_value = desired_lane_angle;
+			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2 / current_velocity;
+			//*double_value = desired_lane_angle;
 	}
 
 }
@@ -291,7 +292,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 	lane_change_to_right = 0.0;
 	*long_value = 0;
 
-	if (cur_link == 7)
+	if (cur_link == 1)
 		number_of_lanes = 2;
 	else
 		number_of_lanes = 1;
@@ -600,19 +601,19 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 			vehicle_headwy_left_downstrm = double_value;
 		}
 		if ((index1 == 1) && (index2 == -1)) {
-			vehicle_headwy_left_upstrm = double_value;
+			vehicle_headwy_left_upstrm = (double_value);
 		}
 		if ((index1 == -1) && (index2 == 1)) {
-			vehicle_headwy_right_downstrm = double_value;
+			vehicle_headwy_right_downstrm = (double_value);
 		}
 		if ((index1 == -1) && (index2 == -1)) {
-			vehicle_headwy_right_upstrm = double_value;
+			vehicle_headwy_right_upstrm = (double_value);
 		}
 		if ((index1 == 0) && (index2 == -1)) {
-			vehicle_headwy_current_upstrm = double_value;
+			vehicle_headwy_current_upstrm = (double_value);
 		}
 		if ((index1 == 0) && (index2 == 1)) {
-			vehicle_headwy_current_downstrm = double_value;
+			vehicle_headwy_current_downstrm = (double_value);
 		}
 		return 1;
 	case DRIVER_DATA_NVEH_REL_VELOCITY:

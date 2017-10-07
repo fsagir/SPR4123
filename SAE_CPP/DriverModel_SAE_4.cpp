@@ -73,10 +73,18 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
       return 1;
     case DRIVER_DATA_DESIRED_ACCELERATION :
 		//*double_value = desired_acceleration;
+		//if (DataMap[VehicleID].Lane_change_in_progress == true)
+		//{
+			//return desired_acceleration;
+		//}
+		//else
 		CalculateAccChange(double_value);
 		return 1;
     case DRIVER_DATA_DESIRED_LANE_ANGLE :
-		//*double_value = desired_lane_angle;
+		//if (DataMap[VehicleID].Lane_change_in_progress == true)
+		//{
+			//return desired_lane_angle;
+		//}else
 		DetermineLatPosValue(double_value);
 		return 1;
     case DRIVER_DATA_ACTIVE_LANE_CHANGE :
@@ -87,7 +95,7 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
 		/**long_value = (rand() % 3) - 1;*/
       return 1;
     case DRIVER_DATA_SIMPLE_LANECHANGE :
-      *long_value = 1;
+      *long_value = 0;
       return 1;
     default :
       return 0;
