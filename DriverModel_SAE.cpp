@@ -110,9 +110,6 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		else if (Vehicle::Current_SAE() == SAE_1)
 			*double_value = (Cur_Vehicle->LateralDeviation() - Cur_VehData->lateral_position) * 10 / Cur_VehData->current_velocity;
 		else
-		{
-			//SAE 2 -> 5
-		}
 			*double_value = Cur_Vehicle->DetermineLatPosValue();
 
 		return 1;

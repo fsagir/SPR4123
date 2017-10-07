@@ -50,6 +50,7 @@ namespace SAE_VEHICLE
 		static Vehicle * Cur_Vehicle;
 		static SAE_VEHICLE::VehicleData * Cur_VehData;
 
+		double  time_step;
 		double current_time;
 		uint32_t Volume;
 		constexpr double a();
@@ -145,7 +146,6 @@ namespace SAE_VEHICLE
 		double  desired_velocity;
 		long    turning_indicator;
 		long    vehicle_color;
-		double  time_step;
 		double  ratio;
 		double  desired_space_headway;
 		double  relative_velocity;

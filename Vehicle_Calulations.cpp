@@ -252,7 +252,7 @@ double SAE_VEHICLE::VehicleData::CalculateAccChange()
 	static double acc_acc = 0;
 	static double acc_cah = 0;
 	space_headway = relative_distance - vehicle_length;
-	if (cur_link != 7) {
+	if (cur_link != 1) {
 
 		desired_velocity = 12.5 + (desired_velocity - 24.44) / 12.5 * (24.44 - 12.5);
 	}

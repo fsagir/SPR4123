@@ -55,7 +55,7 @@ public:
 	//method to calulate acceleration change
 	double CalculateAccChange();
 
-	SAE_VEHICLE::VehicleData & Vehicle_Data;
+	SAE_VEHICLE::VehicleData & Vehicle_Data();
 
 	//method to reteve vehicle ID value
 	long GetVehicleID();

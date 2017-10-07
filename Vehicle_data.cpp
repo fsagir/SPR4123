@@ -7,13 +7,16 @@
 
 #include <windows.h>
 
-Vehicle * SAE_VEHICLE::StaticData::Cur_Vehicle;
-SAE_VEHICLE::VehicleData * SAE_VEHICLE::StaticData::Cur_VehData;
+std::unique_ptr<Vehicle> VehZero(new Vehicle(0));
+
+
+Vehicle * SAE_VEHICLE::StaticData::Cur_Vehicle = VehZero.get();
+SAE_VEHICLE::VehicleData * SAE_VEHICLE::StaticData::Cur_VehData = &VehZero->Vehicle_Data();
 
 SAE_VEHICLE::StaticData Vehicle::Simulation;
 std::map<int, std::unique_ptr<Vehicle>> Vehicle::DataMap; //This stores the vehicle data
 
-Vehicle::Vehicle(long VehicleID) : Veh_Data(new SAE_VEHICLE::VehicleData), Vehicle_Data(*Veh_Data)
+Vehicle::Vehicle(long VehicleID) : Veh_Data(new SAE_VEHICLE::VehicleData)
 {
 
 }
@@ -23,15 +26,19 @@ Vehicle::Vehicle(int V_id_LU, int V_id_RU, long VehicleID) : Vehicle(VehicleID)
 }
 double Vehicle::CalculateAccChange()
 {
-	return Vehicle_Data.CalculateAccChange();
+	return Vehicle_Data().CalculateAccChange();
+}
+SAE_VEHICLE::VehicleData & Vehicle::Vehicle_Data()
+{
+	return *Veh_Data;
 }
 long Vehicle::GetVehicleID()
 {
-	return Vehicle_Data.VehicleID;
+	return Vehicle_Data().VehicleID;
 }
 Control_Mode & Vehicle::Control_Mode()
 {
-	return Vehicle_Data.Current_Level;
+	return Vehicle_Data().Current_Level;
 }
 double Vehicle::reaction_time()
 {
@@ -92,7 +99,7 @@ void Vehicle::DataSetValue(long type, long index1, long index2, long long_value,
 		Cur_VehData->turning_indicator = long_value;
 		break;
 	case DRIVER_DATA_TIMESTEP:
-		Cur_VehData->time_step = double_value;
+		Vehicle::Simulation.time_step = double_value;
 		break;
 	case DRIVER_DATA_VEH_ID:
 		Vehicle::Simulation.Current_Vehicle_ID = long_value;
@@ -105,7 +112,7 @@ void Vehicle::DataSetValue(long type, long index1, long index2, long long_value,
 		}
 
 		Cur_Vehicle = DataMap[Vehicle::Simulation.Current_Vehicle_ID].get();
-		Cur_VehData = & Cur_Vehicle->Vehicle_Data;
+		Cur_VehData = & Cur_Vehicle->Vehicle_Data();
 		break;
 	case DRIVER_DATA_TIME:
 		Vehicle::Simulation.current_time = double_value;
@@ -294,22 +301,22 @@ Vehicle & Vehicle::VehicleNumber(long int Num)
 }
 SAE_VEHICLE::VehicleData & Vehicle::VehicleData(long int Num)
 {
-	return DataMap[Num]->Vehicle_Data;
+	return DataMap[Num]->Vehicle_Data();
 }
 double Vehicle::LateralDeviation()
 {
-	return Vehicle_Data.LateralDeviation();
+	return Vehicle_Data().LateralDeviation();
 }
 void Vehicle::poll()
 {
 	/* This poll method allows for per-frame vehicle updates and tests*/
 
-	if (Vehicle_Data.x_coordinate >= 10)
+	if (Vehicle_Data().x_coordinate >= 10)
 	{
-		if (Vehicle_Data.Volume_set == false)
+		if (Vehicle_Data().Volume_set == false)
 		{
 			Vehicle::Simulation.Volume++;
-			Vehicle_Data.Volume_set = true;
+			Vehicle_Data().Volume_set = true;
 		}
 	}
 
@@ -320,8 +327,8 @@ void Vehicle::poll()
 		return;
 	}
 
-	if (Vehicle_Data.x_coordinate > -6400
-		&& Vehicle_Data.x_coordinate < -5600)
+	if (Vehicle_Data().x_coordinate > -6400
+		&& Vehicle_Data().x_coordinate < -5600)
 	{
 		//For levels 0 -> 4 set human control for specific period
 		Control_Mode() = Human_Control;
@@ -334,17 +341,17 @@ void Vehicle::poll()
 		return;
 	}
 
-	if (Control_Mode() == Automated_Control && Vehicle_Data.current_velocity > 15.65)
+	if (Control_Mode() == Automated_Control && Vehicle_Data().current_velocity > 15.65)
 	{
 		//for SAE 0->3 Transfer control to human above the speed of 15.65
-		Vehicle_Data.time_to_shift = Vehicle::Simulation.current_time + reaction_time();
+		Vehicle_Data().time_to_shift = Vehicle::Simulation.current_time + reaction_time();
 		Control_Mode() = Human_Control;
 	}
 
-	if (Control_Mode() == Human_Control && Vehicle_Data.current_velocity < 15.65)
+	if (Control_Mode() == Human_Control && Vehicle_Data().current_velocity < 15.65)
 	{
 		//for SAE 0->3 Transfer control to machine below the speed of 15.65
-		Vehicle_Data.time_to_shift = Vehicle::Simulation.current_time + 2 * reaction_time();
+		Vehicle_Data().time_to_shift = Vehicle::Simulation.current_time + 2 * reaction_time();
 		Control_Mode() = Automated_Control;
 	}
 }
@@ -374,22 +381,22 @@ void Vehicle::StoreVehicleFrame()
 	//begin outputting the vehicle data into a `stringstream` object (converts all information into
 	//	a plain-text format.
 	std::stringstream SS;
-	SS << Vehicle_Data.VehicleID << ','
-		<< Vehicle_Data.vehicle_type << ','
-		<< Vehicle_Data.Initial_link << ','
-		<< Vehicle_Data.Initial_Lane << ','
-		<< Vehicle_Data.final_link << ','
+	SS << Vehicle_Data().VehicleID << ','
+		<< Vehicle_Data().vehicle_type << ','
+		<< Vehicle_Data().Initial_link << ','
+		<< Vehicle_Data().Initial_Lane << ','
+		<< Vehicle_Data().final_link << ','
 		<< CurTime() << ','
-		<< Vehicle_Data.current_acceleration << ','
-		<< Vehicle_Data.current_velocity << ','
-		<< Vehicle_Data.relative_distance << ','
-		<< Vehicle_Data.x_coordinate << ','
-		<< Vehicle_Data.y_coordinate << ','
+		<< Vehicle_Data().current_acceleration << ','
+		<< Vehicle_Data().current_velocity << ','
+		<< Vehicle_Data().relative_distance << ','
+		<< Vehicle_Data().x_coordinate << ','
+		<< Vehicle_Data().y_coordinate << ','
 		<< Simulation.Volume << ','
-		<< Vehicle_Data.lateral_position << ','
-		<< Vehicle_Data.desired_lane_angle << ','
-		<< Vehicle_Data.Random_value << ','
-		<< Vehicle_Data.Change_volume
+		<< Vehicle_Data().lateral_position << ','
+		<< Vehicle_Data().desired_lane_angle << ','
+		<< Vehicle_Data().Random_value << ','
+		<< Vehicle_Data().Change_volume
 		<< '\n';
 	//Take resulting stream and save to a single String.
 	std::string output = SS.str();
@@ -400,11 +407,11 @@ void Vehicle::StoreVehicleFrame()
 }
 double Vehicle::DetermineLatPosValue()
 {
-	return Vehicle_Data.DetermineLatPosValue();
+	return Vehicle_Data().DetermineLatPosValue();
 }
 long Vehicle::DetermineLaneChangeValue()
 {
-	return Vehicle_Data.DetermineLaneChangeValue();
+	return Vehicle_Data().DetermineLaneChangeValue();
 }
 
 
@@ -425,7 +432,6 @@ SAE_VEHICLE::VehicleData::VehicleData() : Initial_Lane(-1), Change_volume(0), Vo
 	vehicle_color = RGB(0, 0, 0);
 	current_velocity = 0.0;
 	current_acceleration = 0.0;
-	time_step = 0.0;
 
 	jam_distance = 2.0;
 	ratio = 0.0;
@@ -503,5 +509,7 @@ SAE_VEHICLE::VehicleData::VehicleData() : Initial_Lane(-1), Change_volume(0), Vo
 SAE_VEHICLE::StaticData::StaticData() :
 	current_time(0), Volume(0)
 {
-
+	time_step = 0.0;
+	this->Cur_Vehicle = VehZero.get();
+	this->Cur_VehData = &(VehZero->Vehicle_Data());
 }
