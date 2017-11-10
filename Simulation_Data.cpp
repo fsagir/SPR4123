@@ -145,6 +145,12 @@ long vehicle_type = 0;
 double x_coordinate;
 double y_coordinate;
 double reaction_time = 0.0;
+double desired_angle = 0.0;
+//bool lane_change_in_progress = 0;
+//bool completion_of_lane_change = 0;
+//double change_of_control_on_angle_time = 0;
+double duration_of_vissim_conrol_on_angle_after_lane_change = 2;
+
 
 void CalculateAccChange(double * double_value)
 {

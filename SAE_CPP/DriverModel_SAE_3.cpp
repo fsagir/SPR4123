@@ -85,6 +85,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
 
+
 		DetermineLaneChangeValue(long_value);
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:

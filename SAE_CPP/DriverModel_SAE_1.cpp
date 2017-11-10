@@ -71,7 +71,21 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		return 1;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
 		/*RandomValue *= 100;*/
-		*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*10/ current_velocity;
+		
+		
+		if (active_lane_change != 0){
+			*double_value = desired_angle;
+			/*lane_change_in_progress = 1;*/
+		}
+		
+		else if(current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		{
+			*double_value = desired_angle;
+		}
+
+		else {
+			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / current_velocity;
+		}
 		//if (desired_lane_angle >= 0)
 		//{
 		//	*double_value = RandomValue;
@@ -81,6 +95,14 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		//	*double_value = -RandomValue;
 
 		//}
+
+		//if (lane_change_in_progress == 1 && active_lane_change == 0)
+		//{
+		//	lane_change_in_progress = 0;
+		//	completion_of_lane_change = 1;
+		//	change_of_control_on_angle_time = current_time + duration_of_vissim_conrol_on_angle_after_lane_change;
+		//}
+
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
 		*long_value = active_lane_change;

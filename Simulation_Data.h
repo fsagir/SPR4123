@@ -108,6 +108,13 @@ extern double y_coordinate;
 extern bool level_shift;
 extern double time_to_shift;
 extern double reaction_time;
+extern double lateral_position;
+extern double desired_angle;
+//extern bool lane_change_in_progress;
+//extern bool completion_of_lane_change;
+//extern double change_of_control_on_angle_time;
+extern double duration_of_vissim_conrol_on_angle_after_lane_change;
+
 
 
 

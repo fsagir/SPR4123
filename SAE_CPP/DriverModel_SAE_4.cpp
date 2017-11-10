@@ -95,7 +95,7 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
 		/**long_value = (rand() % 3) - 1;*/
       return 1;
     case DRIVER_DATA_SIMPLE_LANECHANGE :
-      *long_value = 0;
+      *long_value = 1;
       return 1;
     default :
       return 0;

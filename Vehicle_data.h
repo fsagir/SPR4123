@@ -40,6 +40,8 @@ public:
 	double future_lateral_position;
 	Level_Shift level_shift;
 	double time_to_shift;
+	double Time_of_completion_of_lane_change;
+	double Time_of_change_of_control_on_lane_angle;
 	
 	
 };

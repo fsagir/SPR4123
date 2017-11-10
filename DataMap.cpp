@@ -15,8 +15,7 @@
 //Implemention of extern variable in Vehicle_data.h
 std::map<int, VehicleData> DataMap; //This stores the vehicle data
 
-extern double lateral_position;
-extern double desired_angle;
+
 //Datasetvalue function implementation (details can be found in Vehicle_data.h)
 void DataSetValue(long   type,
 	long   index1,
@@ -93,6 +92,8 @@ void DataSetValue(long   type,
 		}
 		break;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
+		desired_angle = double_value;
+		
 		DataMap[VehicleID].desired_lane_angle = double_value;
 		break;
 	case DRIVER_DATA_VEH_LATERAL_POSITION:
@@ -120,7 +121,7 @@ void DataSetValue(long   type,
 
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		if (long_value == 1)
+		if (long_value != 0)
 		{
 			if (DataMap[VehicleID].Lane_change_in_progress == false)
 			{
@@ -132,7 +133,18 @@ void DataSetValue(long   type,
 			}
 			DataMap[VehicleID].Lane_change_in_progress = true;
 		}
-		else DataMap[VehicleID].Lane_change_in_progress = false;
+		else
+		{   
+			if (DataMap[VehicleID].Lane_change_in_progress == true)
+			{
+				DataMap[VehicleID].Time_of_completion_of_lane_change = current_time;
+				DataMap[VehicleID].Time_of_change_of_control_on_lane_angle = DataMap[VehicleID].Time_of_completion_of_lane_change + duration_of_vissim_conrol_on_angle_after_lane_change;
+
+			}
+
+			DataMap[VehicleID].Lane_change_in_progress == false;
+			
+		}
 	case DRIVER_DATA_VEH_LANE_ANGLE:
 		DataMap[VehicleID].Cur_veh_angle = double_value;
 		break;
@@ -300,6 +312,8 @@ VehicleData::VehicleData() : Initial_Lane(0), Change_volume(0), lane_set(false),
 	future_lateral_position = 0;
 	level_shift = Human_Control;
 	time_to_shift= 0.0;
+	Time_of_completion_of_lane_change =0.0;
+	Time_of_change_of_control_on_lane_angle =0.0;
 };
 //initialisation of static-volume property to zero.
 uint32_t VehicleData::Volume = 0;
