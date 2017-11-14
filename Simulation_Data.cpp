@@ -4,6 +4,7 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+#include <algorithm>
 
 //Variables declared here are defined in Simulation_Data.h
 long		cur_link = -1;
@@ -256,18 +257,50 @@ void DetermineLatPosValue(double * double_value)
 	if (DataMap[VehicleID].level_shift == Human_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2/current_velocity;
-			//*double_value = desired_lane_angle;
+		{
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity <= 0)
+			{
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, -.2);
+			}
+
+			else
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, .2);
+		}			//*double_value = desired_lane_angle;
 		else
-			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2/current_velocity;
+		{
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity <= 0)
+			{
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, -.2);
+			}
+
+			else
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, .2);
+			
+		}
 	}
 	else if (DataMap[VehicleID].level_shift == Automated_Control )
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
-			*double_value = DataMap[VehicleID].Random_value = ((DataMap[VehicleID].LateralDeviation()) / 5 - lateral_position)*2 / current_velocity;
+		{
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity <= 0)
+			{
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, -.2);
+			}
+
+			else
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, .2);
+
+		}
 		else
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position)*2 / current_velocity;
-			//*double_value = desired_lane_angle;
+		{
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity <= 0)
+			{
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, -.2);
+			}
+
+			else
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, .2);
+		}
 	}
 
 }

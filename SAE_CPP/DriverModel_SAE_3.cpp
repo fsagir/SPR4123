@@ -16,6 +16,7 @@
 #include <random>
 #include <chrono>
 
+
 /*==========================================================================*/
 
 BOOL APIENTRY DllMain(HANDLE  hModule,
@@ -81,7 +82,21 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		//	return 1;*/
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
 		/*RandomValue *= 100;*/
-		DetermineLatPosValue(double_value);
+
+		if (active_lane_change != 0) {
+			*double_value = desired_angle;
+			/*lane_change_in_progress = 1;*/
+		}
+
+		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		{
+			*double_value = desired_angle;
+		}
+
+		else {
+			DetermineLatPosValue(double_value);
+		}
+
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
 
