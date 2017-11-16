@@ -102,6 +102,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 
 
 		DetermineLaneChangeValue(long_value);
+
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		/**long_value = (rand() % 3) - 1;*/

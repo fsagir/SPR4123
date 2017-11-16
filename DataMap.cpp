@@ -354,7 +354,7 @@ double VehicleData::LateralDeviation()
 
 	future_lateral_position = Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t;
 	if (lateral_position >= 1.5|| lateral_position <= -1.5 || future_lateral_position >=1.5 || future_lateral_position <= -1.5)
-		return lateral_position;
+		return 0;
 	/*	future_lateral_position = abs((Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t)*10/current_velocity);*/
 	else 
 		return future_lateral_position;

@@ -151,6 +151,7 @@ double desired_angle = 0.0;
 //bool completion_of_lane_change = 0;
 //double change_of_control_on_angle_time = 0;
 double duration_of_vissim_conrol_on_angle_after_lane_change = 2;
+long MOBIL_active_lane_change = 0;
 
 
 void CalculateAccChange(double * double_value)
@@ -258,23 +259,23 @@ void DetermineLatPosValue(double * double_value)
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
 		}			//*double_value = desired_lane_angle;
 		else
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80 <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, .2);
 			
 		}
 	}
@@ -282,24 +283,24 @@ void DetermineLatPosValue(double * double_value)
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80 <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / desired_velocity, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, .2);
 
 		}
 		else
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / desired_velocity, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
 		}
 	}
 
@@ -331,7 +332,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 	lane_change_to_right = 0.0;
 	*long_value = 0;
 
-	if (cur_link == 1)
+	if (cur_link == 7)
 		number_of_lanes = 2;
 	else
 		number_of_lanes = 1;
@@ -465,15 +466,20 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 	if ((lane_change_to_left > lane_change_to_right) && (lane_change_to_left >= acc_thr)) {
 		*long_value = 1;
+		MOBIL_active_lane_change = 1;
+		
 	}
 	else if ((lane_change_to_right > lane_change_to_left) && (lane_change_to_right >= acc_thr)) {
 		*long_value = -1;
+		MOBIL_active_lane_change = -1;
 	}
 	else if ((lane_change_to_right == lane_change_to_left) && (lane_change_to_right > acc_thr)) {
 		*long_value = 1;
+		MOBIL_active_lane_change = 1;
 	}
 	else {
 		*long_value = 0;
+		MOBIL_active_lane_change = 0;
 	}
 	//*long_value = (rand() % 3) - 1;
 }

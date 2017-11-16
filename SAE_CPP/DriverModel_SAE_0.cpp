@@ -82,7 +82,13 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		}
 
 		else {
-			*double_value = DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / current_velocity;
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
+			{
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
+			}
+
+			else
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
 		}
 
 		return 1;

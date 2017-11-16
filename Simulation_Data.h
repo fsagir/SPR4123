@@ -114,6 +114,7 @@ extern double desired_angle;
 //extern bool completion_of_lane_change;
 //extern double change_of_control_on_angle_time;
 extern double duration_of_vissim_conrol_on_angle_after_lane_change;
+extern long MOBIL_active_lane_change;
 
 
 
