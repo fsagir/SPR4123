@@ -11,6 +11,7 @@
 #include <random>
 #include <chrono>
 
+double k = 0.0;
 
 //Implemention of extern variable in Vehicle_data.h
 std::map<int, VehicleData> DataMap; //This stores the vehicle data
@@ -121,7 +122,7 @@ void DataSetValue(long   type,
 
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		if (long_value != 0)
+		if (lane_change_for_SAE_level != 0)
 		{
 			if (DataMap[VehicleID].Lane_change_in_progress == false)
 			{
@@ -139,10 +140,11 @@ void DataSetValue(long   type,
 			{
 				DataMap[VehicleID].Time_of_completion_of_lane_change = current_time;
 				DataMap[VehicleID].Time_of_change_of_control_on_lane_angle = DataMap[VehicleID].Time_of_completion_of_lane_change + duration_of_vissim_conrol_on_angle_after_lane_change;
-
+				
+				
 			}
 
-			DataMap[VehicleID].Lane_change_in_progress == false;
+			DataMap[VehicleID].Lane_change_in_progress = false;
 			
 		}
 	case DRIVER_DATA_VEH_LANE_ANGLE:

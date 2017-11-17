@@ -152,6 +152,7 @@ double desired_angle = 0.0;
 //double change_of_control_on_angle_time = 0;
 double duration_of_vissim_conrol_on_angle_after_lane_change = 2;
 long MOBIL_active_lane_change = 0;
+long lane_change_for_SAE_level = 0;
 
 
 void CalculateAccChange(double * double_value)
@@ -310,8 +311,10 @@ void DetermineLaneChangeValue(long * long_value)
 {
 	if (DataMap[VehicleID].level_shift == Human_Control)
 	{
-		if (current_time > DataMap[VehicleID].time_to_shift)
+		if (current_time > DataMap[VehicleID].time_to_shift) {
 			*long_value = active_lane_change;
+			lane_change_for_SAE_level = active_lane_change;
+		}
 		else
 			CalculateAutomatedLaneChange(long_value);
 	}
@@ -320,7 +323,10 @@ void DetermineLaneChangeValue(long * long_value)
 		if (current_time > DataMap[VehicleID].time_to_shift)
 			CalculateAutomatedLaneChange(long_value);
 		else
+		{
 			*long_value = active_lane_change;
+			lane_change_for_SAE_level = active_lane_change;
+		}
 	}
 
 }
@@ -331,6 +337,12 @@ void CalculateAutomatedLaneChange(long* long_value)
 	lane_change_to_left = 0.0;
 	lane_change_to_right = 0.0;
 	*long_value = 0;
+	if (abs(lateral_position) > 1.75)
+	{
+		*long_value = 0;
+		lane_change_for_SAE_level = 0;
+		return;
+	}
 
 	if (cur_link == 7)
 		number_of_lanes = 2;
@@ -357,7 +369,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 	//		jam_distance, time_headway, a, b, space_ratio);
 	//}
 	if (vehicle_ID_current_upstrm > 0)
-		acc_idm_current_upstream = ACC_idm(vehicle_headwy_current_downstrm + vehicle_headwy_current_upstrm, vehicle_length, -(vehicle_rel_spd_current_downstrm - vehicle_rel_spd_current_upstrm), time_ln_ch,
+		acc_idm_current_upstream = ACC_idm(vehicle_headwy_current_downstrm - vehicle_headwy_current_upstrm, vehicle_length, -(vehicle_rel_spd_current_downstrm - vehicle_rel_spd_current_upstrm), time_ln_ch,
 		(current_velocity - vehicle_rel_spd_current_upstrm), vehicle_desired_vel_array[vehicle_ID_current_upstrm],
 			jam_distance, time_headway, a, b, space_ratio) - pow(space_ratio, 2);
 	else acc_idm_current_upstream = 0;
@@ -466,20 +478,20 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 	if ((lane_change_to_left > lane_change_to_right) && (lane_change_to_left >= acc_thr)) {
 		*long_value = 1;
-		MOBIL_active_lane_change = 1;
+		lane_change_for_SAE_level = 1;
 		
 	}
 	else if ((lane_change_to_right > lane_change_to_left) && (lane_change_to_right >= acc_thr)) {
 		*long_value = -1;
-		MOBIL_active_lane_change = -1;
+		lane_change_for_SAE_level = -1;
 	}
 	else if ((lane_change_to_right == lane_change_to_left) && (lane_change_to_right > acc_thr)) {
 		*long_value = 1;
-		MOBIL_active_lane_change = 1;
+		lane_change_for_SAE_level = 1;
 	}
 	else {
 		*long_value = 0;
-		MOBIL_active_lane_change = 0;
+		lane_change_for_SAE_level = 0;
 	}
 	//*long_value = (rand() % 3) - 1;
 }
