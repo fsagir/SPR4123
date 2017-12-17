@@ -26,6 +26,7 @@ public:
 	bool Volume_set;
 	long Initial_link;
 	long final_link;
+	long active_lane_change;
 	//Change volume declared as uint32 to allow for large volumes
 	uint32_t Change_volume;
 	bool Lane_change_in_progress;

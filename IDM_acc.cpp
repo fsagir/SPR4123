@@ -6,7 +6,7 @@ double ACC_idm(double veh_headwy, double veh_length, double veh_rel_spd,
 {
 	double space_headway = veh_headwy - veh_length + veh_rel_spd * time__ln_ch;
 	double ratio_upstream_ = current_vel  / desired_vel;
-	double desired_space_headway_ = jam__distance + current_vel * time__headway + 0.5 * (current_vel - veh_rel_spd) * (-veh_rel_spd) / sqrt(a_ * b_);
+	double desired_space_headway_ = jam__distance + current_vel * time__headway + 0.5 * (current_vel) * (veh_rel_spd) / sqrt(a_ * b_);
 	space_ratio = desired_space_headway_ / space_headway;
 	return a_ * (1 - pow(ratio_upstream_, 4));
 }
