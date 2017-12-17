@@ -137,7 +137,7 @@ double  acc_idm_current_upstream = 0.0;
 double  p = 1;
 double  acc_thr_human = 1;
 double  acc_thr_system = .5;
-double acc_thr = 0.0;
+double acc_thr = 2;
 double lane_change_to_left = 0.0;
 double lane_change_to_right = 0.0;
 double current_time = 0.0;
@@ -316,6 +316,8 @@ void DetermineLaneChangeValue(long * long_value)
 		if (current_time > DataMap[VehicleID].time_to_shift) {
 			*long_value = active_lane_change;
 			DataMap[VehicleID].active_lane_change = active_lane_change;
+			lane_change_for_SAE_level = active_lane_change;
+
 		}
 		else
 			CalculateAutomatedLaneChange(long_value);
@@ -328,6 +330,7 @@ void DetermineLaneChangeValue(long * long_value)
 		{
 			*long_value = active_lane_change;
 			DataMap[VehicleID].active_lane_change = active_lane_change;
+			lane_change_for_SAE_level = active_lane_change;
 		}
 	}
 
@@ -343,26 +346,27 @@ void CalculateAutomatedLaneChange(long* long_value)
 	{
 		*long_value = 0;
 		DataMap[VehicleID].active_lane_change = 0;
+		lane_change_for_SAE_level = 0;
 		return;
 	}
 
-	if (DataMap[VehicleID].level_shift == Human_Control)
-	{
-		if (current_time > DataMap[VehicleID].time_to_shift) {
-			acc_thr = acc_thr_human;
-		}
-		else
-			acc_thr = acc_thr_system;
-	}
-	else if (DataMap[VehicleID].level_shift == Automated_Control)
-	{
-		if (current_time > DataMap[VehicleID].time_to_shift)
-			acc_thr = acc_thr_system;
-		else
-		{
-			acc_thr = acc_thr_human;
-		}
-	}
+	//if (DataMap[VehicleID].level_shift == Human_Control)
+	//{
+	//	if (current_time > DataMap[VehicleID].time_to_shift) {
+	//		acc_thr = acc_thr_human;
+	//	}
+	//	else
+	//		acc_thr = acc_thr_system;
+	//}
+	//else if (DataMap[VehicleID].level_shift == Automated_Control)
+	//{
+	//	if (current_time > DataMap[VehicleID].time_to_shift)
+	//		acc_thr = acc_thr_system;
+	//	else
+	//	{
+	//		acc_thr = acc_thr_human;
+	//	}
+	//}
 
 	if (cur_link == 7)
 		number_of_lanes = 2;
@@ -500,19 +504,23 @@ void CalculateAutomatedLaneChange(long* long_value)
 	if ((lane_change_to_left > lane_change_to_right) && (lane_change_to_left >= acc_thr)) {
 		*long_value = 1;
 		DataMap[VehicleID].active_lane_change = 1;
+		lane_change_for_SAE_level = 1;
 		
 	}
 	else if ((lane_change_to_right > lane_change_to_left) && (lane_change_to_right >= acc_thr)) {
 		*long_value = -1;
 		DataMap[VehicleID].active_lane_change = -1;
+		lane_change_for_SAE_level = -1;
 	}
 	else if ((lane_change_to_right == lane_change_to_left) && (lane_change_to_right > acc_thr)) {
 		*long_value = 1;
 		DataMap[VehicleID].active_lane_change = 1;
+		lane_change_for_SAE_level = 1;
 	}
 	else {
 		*long_value = 0;
 		DataMap[VehicleID].active_lane_change = 0;
+		lane_change_for_SAE_level = 0;
 	}
 	//*long_value = (rand() % 3) - 1;
 }
