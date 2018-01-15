@@ -8,6 +8,7 @@ class VehicleData
 {
 public:
 	long VehicleID;
+	long active_lane_change;
 	double lateral_position;
 	double desired_lane_angle;
 	double Cur_veh_angle;
@@ -26,7 +27,6 @@ public:
 	bool Volume_set;
 	long Initial_link;
 	long final_link;
-	long active_lane_change;
 	//Change volume declared as uint32 to allow for large volumes
 	uint32_t Change_volume;
 	bool Lane_change_in_progress;
@@ -35,6 +35,7 @@ public:
 	//Constructor to initialise data - defined here, implemented in DataMap.cpp
 	VehicleData();
 	double LateralDeviation();
+	void update_stochastic();
 	double y1;
 	double y2;
 	double y3;
@@ -43,6 +44,14 @@ public:
 	double time_to_shift;
 	double Time_of_completion_of_lane_change;
 	double Time_of_change_of_control_on_lane_angle;
+	//Stochastic experiment variables
+	double a_copy;
+	double b_copy;
+	double time_headway_copy;
+	double reaction_time_copy;
+	double acc_thr_human_copy;
+	double acc_thr_system_copy;
+
 	
 	
 };

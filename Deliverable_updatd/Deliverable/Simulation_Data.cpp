@@ -156,6 +156,47 @@ double duration_of_vissim_conrol_on_angle_after_lane_change = 2;
 long MOBIL_active_lane_change = 0;
 long lane_change_for_SAE_level = 0;
 
+double truncated_normal_distribution(double x) {
+	//First we create a true random number generator
+	// each run will be totally different, so for debugging
+	//and tracing purposes it is better to use some determinestic seed
+	std::random_device rd;
+	// then we use a psudeo random number generator in this case I am using Mersenne Twister
+	std::mt19937 gen(rd());
+	// next we create a normal distribution with variance of 1 an mean around the original value of x
+	std::normal_distribution<double> d(x, x/10);
+	while (true) {
+		double y = d(gen);
+		if ((y >= 0.5 * x) && (y <= 3 * x / 2)) {
+			return y;
+		}
+	}
+
+}
+double drand(double min, double max) {
+	//generate random number between min and max values
+	double f = (double)rand() / RAND_MAX;
+	return min + f * (max - min);
+}
+double epsilon(double x, double err) {
+	// we generate a biased version of x with error + or - err%
+	double start = x * (100 - err) / 100;
+	double end = x * (100 + err) / 100;
+	return drand(start, end);
+}
+/*
+// This function should be called inside your main function before anykind of simulations
+void stochastic_initializer(){
+	a = truncated_normal_distribution(a);
+	b = truncated_normal_distribution(b);
+	time_headway = truncated_normal_distribution(time_headway);
+	reaction_time = truncated_normal_distribution(reaction_time);
+	acc_thr_human = truncated_normal_distribution(acc_thr_human);
+	acc_thr_system = truncated_normal_distribution(acc_thr_system);
+
+
+}
+*/
 
 void CalculateAccChange(double * double_value)
 {
@@ -164,8 +205,10 @@ void CalculateAccChange(double * double_value)
 
 	space_headway = relative_distance - vehicle_length;
 	if (cur_link != 7) {
-
-	desired_velocity = 11.2 + (desired_velocity - 24.4) / (36.12 -24.4) * (15.6-11.2);
+		desired_velocity = 11.2 + (desired_velocity - 24.4) / (36.12 - 24.4) * (15.6 - 11.2);
+		if (desired_velocity != 0) {
+			p = current_velocity / desired_velocity;
+		}
 	}
 	ratio = current_velocity / desired_velocity;
 	desired_space_headway = jam_distance + current_velocity * time_headway + 0.5 * current_velocity * relative_velocity / sqrt(a * b);
@@ -528,7 +571,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 //Setvalue function is called by VISSIM to provide information to simulation
 
-DRIVERMODEL_API  int  DriverModelSetValue(long   type,
+/*DRIVERMODEL_API*/  int  DriverModelSetValue(long   type,
 	long   index1,
 	long   index2,
 	long   long_value,
@@ -587,6 +630,9 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		return 1;
 	case DRIVER_DATA_VEH_VELOCITY:
 		current_velocity = double_value;
+		if (desired_velocity != 0) {
+			p = current_velocity / desired_velocity;
+		}
 
 
 		return 1;
@@ -607,6 +653,9 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		return 1;
 	case DRIVER_DATA_VEH_DESIRED_VELOCITY:
 		desired_velocity = double_value;
+		if (desired_velocity != 0) {
+			p = current_velocity / desired_velocity;
+		}
 		if (vehicle_desired_vel_array.size() < vehicle_identity + 1)
 			vehicle_desired_vel_array.resize(vehicle_identity + 1);
 		vehicle_desired_vel_array[vehicle_identity] = double_value;

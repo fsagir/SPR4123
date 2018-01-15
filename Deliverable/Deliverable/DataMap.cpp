@@ -46,7 +46,6 @@ void DataSetValue(long   type,
 		if ((x_coordinate > 600) && (x_coordinate < 900))
 		{
 			DataMap[VehicleID].level_shift = Human_Control;
-		
 			break;
 		}
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
@@ -161,11 +160,11 @@ void DataSetValue(long   type,
 std::string CurTime()
 {
 	time_t rawtime;
-	struct tm * timeinfo;
+	struct tm timeinfo;
 	char buffer[80];
 	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(buffer, sizeof(buffer), "%d-%m-%Y_%I-%M", timeinfo);
+	localtime_s(&timeinfo, &rawtime); //This way we make visual studio happy
+	strftime(buffer, sizeof(buffer), "%d-%m-%Y_%I-%M", &timeinfo);
 	std::string retval(buffer);
 	return retval;
 }
@@ -288,21 +287,16 @@ void StoreSituationData(int Veh)
 	SS.str("");
 	SS << VehicleID << ','
 		<< x_coordinate << ','
-		<< DataMap[VehicleID].active_lane_change << ','
-		<< active_lane_change << ','
-		<<lateral_position<<','
-		<< cur_link << ','
-		<< cur_veh_lane << ','
-		<< DataMap[VehicleID].level_shift<<','
-		<< DataMap[VehicleID].time_to_shift<<','
-		<<current_time<<','
-		//<< pow(space_ratio,2) << ','
-		//<< acc_acc << ','
-		//<< acc_idm << ','
-		//<< desired_space_headway << ','
-		//<< relative_distance << ','
-		//<< vehicle_ID << ','
-		//<< DataMap[vehicle_ID].current_velocity << ','
+		<< current_velocity << ','
+		<< desired_velocity << ','
+		<< pow(ratio,4) << ','
+		<< pow(space_ratio,2) << ','
+		<< acc_acc << ','
+		<< acc_idm << ','
+		<< desired_space_headway << ','
+		<< relative_distance << ','
+		<< vehicle_ID << ','
+		<< DataMap[vehicle_ID].current_velocity << ','
 		<< "\n";
 
 	std::string output = SS.str();

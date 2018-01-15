@@ -40,7 +40,7 @@ BOOL APIENTRY DllMain (HANDLE  hModule,
 
 
 /*--------------------------------------------------------------------------*/
-DRIVERMODEL_API  int  DriverModelGetValue (long   type, 
+/*DRIVERMODEL_API*/  int  DriverModelGetValue (long   type, 
                                            long   index1,
                                            long   index2,
                                            long   *long_value,
@@ -81,12 +81,12 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
 		CalculateAccChange(double_value);
 		return 1;
     case DRIVER_DATA_DESIRED_LANE_ANGLE :
-		//if (DataMap[VehicleID].active_lane_change != 0) {
-		//	*double_value = desired_angle;
-		//	/*lane_change_in_progress = 1;*/
-		//}
+		if (lane_change_for_SAE_level != 0) {
+			*double_value = desired_angle;
+			/*lane_change_in_progress = 1;*/
+		}
 
-		if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
 		{
 			*double_value = desired_angle;
 			
@@ -113,7 +113,7 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
 
 /*==========================================================================*/
 
-DRIVERMODEL_API  int  DriverModelExecuteCommand (long number)
+/*DRIVERMODEL_API */ int  DriverModelExecuteCommand (long number)
 {
   /* Executes the command <number> if that is available in the driver */
   /* module. Return value is 1 on success, otherwise 0.               */

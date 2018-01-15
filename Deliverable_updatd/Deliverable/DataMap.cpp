@@ -39,6 +39,8 @@ void DataSetValue(long   type,
 		break;
 	case DRIVER_DATA_TIME:
 		DataMap[VehicleID].current_time = double_value;
+		// each timer tick we shall update the stochastic data
+		DataMap[VehicleID].update_stochastic();
 #if defined(SAE5_CAR) || defined(SAE5_TRUCK)
 		DataMap[VehicleID].level_shift = Automated_Control;
 		break;
@@ -46,7 +48,6 @@ void DataSetValue(long   type,
 		if ((x_coordinate > 600) && (x_coordinate < 900))
 		{
 			DataMap[VehicleID].level_shift = Human_Control;
-		
 			break;
 		}
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
@@ -161,11 +162,11 @@ void DataSetValue(long   type,
 std::string CurTime()
 {
 	time_t rawtime;
-	struct tm * timeinfo;
+	struct tm timeinfo;
 	char buffer[80];
 	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(buffer, sizeof(buffer), "%d-%m-%Y_%I-%M", timeinfo);
+	localtime_s(&timeinfo, &rawtime); //This way we make visual studio happy
+	strftime(buffer, sizeof(buffer), "%d-%m-%Y_%I-%M", &timeinfo);
 	std::string retval(buffer);
 	return retval;
 }
@@ -288,21 +289,16 @@ void StoreSituationData(int Veh)
 	SS.str("");
 	SS << VehicleID << ','
 		<< x_coordinate << ','
-		<< DataMap[VehicleID].active_lane_change << ','
-		<< active_lane_change << ','
-		<<lateral_position<<','
-		<< cur_link << ','
-		<< cur_veh_lane << ','
-		<< DataMap[VehicleID].level_shift<<','
-		<< DataMap[VehicleID].time_to_shift<<','
-		<<current_time<<','
-		//<< pow(space_ratio,2) << ','
-		//<< acc_acc << ','
-		//<< acc_idm << ','
-		//<< desired_space_headway << ','
-		//<< relative_distance << ','
-		//<< vehicle_ID << ','
-		//<< DataMap[vehicle_ID].current_velocity << ','
+		<< current_velocity << ','
+		<< desired_velocity << ','
+		<< pow(ratio,4) << ','
+		<< pow(space_ratio,2) << ','
+		<< acc_acc << ','
+		<< acc_idm << ','
+		<< desired_space_headway << ','
+		<< relative_distance << ','
+		<< vehicle_ID << ','
+		<< DataMap[vehicle_ID].current_velocity << ','
 		<< "\n";
 
 	std::string output = SS.str();
@@ -322,10 +318,26 @@ VehicleData::VehicleData() : Initial_Lane(0), Change_volume(0), lane_set(false),
 	time_to_shift= 0.0;
 	Time_of_completion_of_lane_change =0.0;
 	Time_of_change_of_control_on_lane_angle =0.0;
+	a_copy = a;
+	b_copy = b;
+	time_headway_copy = truncated_normal_distribution(time_headway);
+	reaction_time_copy = truncated_normal_distribution(reaction_time);
+	acc_thr_human_copy = truncated_normal_distribution(acc_thr_human);
+	acc_thr_system_copy = truncated_normal_distribution(acc_thr_system);
 };
 //initialisation of static-volume property to zero.
 uint32_t VehicleData::Volume = 0;
-
+void VehicleData::update_stochastic()
+{
+	// we add + or - 10 % error rate for each value
+	int err = 10;
+	a_copy = epsilon(a_copy, err);
+	b_copy = epsilon(b_copy, err);
+	time_headway_copy = epsilon(time_headway_copy, err);
+	reaction_time_copy = epsilon(reaction_time_copy, err);
+	acc_thr_human_copy = epsilon(acc_thr_human_copy, err);
+	acc_thr_system_copy = epsilon(acc_thr_system_copy, err);
+}
 double VehicleData::LateralDeviation()
 {
 

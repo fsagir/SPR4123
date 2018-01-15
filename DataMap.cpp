@@ -43,7 +43,7 @@ void DataSetValue(long   type,
 		DataMap[VehicleID].level_shift = Automated_Control;
 		break;
 #endif
-		if ((x_coordinate > 600) && (x_coordinate < 900))
+		if ((x_coordinate > 9600) && (x_coordinate < 10900))
 		{
 			DataMap[VehicleID].level_shift = Human_Control;
 		
@@ -56,13 +56,13 @@ void DataSetValue(long   type,
 			break;
 		}
 #else
-		if (DataMap[VehicleID].level_shift == Automated_Control && DataMap[VehicleID].current_velocity > 17.9)
+		if (DataMap[VehicleID].level_shift == Automated_Control && DataMap[VehicleID].current_velocity > 35)
 		{
 			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + reaction_time;
 			DataMap[VehicleID].level_shift = Human_Control;
 		}
 		//check to see if we are under human control and below 17.9 m/s speed limit
-		if (DataMap[VehicleID].level_shift == Human_Control && DataMap[VehicleID].current_velocity < 17.9)
+		if (DataMap[VehicleID].level_shift == Human_Control && DataMap[VehicleID].current_velocity < 35)
 		{
 			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + 2 * reaction_time;
 			DataMap[VehicleID].level_shift = Automated_Control;
@@ -318,7 +318,7 @@ VehicleData::VehicleData() : Initial_Lane(0), Change_volume(0), lane_set(false),
 	y2 = 0;
 	y3 = 0;
 	future_lateral_position = 0;
-	level_shift = Human_Control;
+	level_shift = Automated_Control;
 	time_to_shift= 0.0;
 	Time_of_completion_of_lane_change =0.0;
 	Time_of_change_of_control_on_lane_angle =0.0;

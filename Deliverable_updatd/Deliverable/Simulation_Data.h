@@ -95,9 +95,7 @@ extern double  acc_idm_left_self ;
 extern double  acc_idm_right_self ;
 extern double  acc_idm_current_upstream ;
 extern double  p ;
-extern double  acc_thr_human ;
-extern double  acc_thr_system ;
-extern double  acc_thr;
+extern double  acc_thr ;
 extern double lane_change_to_left ;
 extern double lane_change_to_right ;
 extern double current_time ;
@@ -118,7 +116,8 @@ extern double desired_angle;
 extern double duration_of_vissim_conrol_on_angle_after_lane_change;
 extern long MOBIL_active_lane_change;
 extern long lane_change_for_SAE_level;
-
+extern double  acc_thr_human;
+extern double  acc_thr_system;
 
 
 
@@ -130,3 +129,5 @@ void DetermineLaneChangeValue(long * long_value);
 void CalculateAutomatedLaneChange(long* long_value);
 
 void CalculateAccChange(double * double_value);
+double truncated_normal_distribution(double x);
+double epsilon(double x, double err);

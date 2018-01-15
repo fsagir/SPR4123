@@ -94,6 +94,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
 		*long_value = active_lane_change;
+		lane_change_for_SAE_level = active_lane_change;
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		*long_value = rel_target_lane;
