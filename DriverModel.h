@@ -94,6 +94,10 @@
            /* double: world coordinate X (vehicle front end) */
 #define  DRIVER_DATA_VEH_Y_COORDINATE        218
            /* double: world coordinate Y (vehicle front end) */
+#define  DRIVER_DATA_VEH_REAR_X_COORDINATE   808
+/* double: world coordinate X (vehicle rear end) */
+#define  DRIVER_DATA_VEH_REAR_Y_COORDINATE   809
+/* double: world coordinate Y (vehicle rear end) */
 #define  DRIVER_DATA_VEH_TYPE                219
            /* long:   vehicle type number (user defined) */
 #define DRIVER_DATA_VEH_COLOR                220

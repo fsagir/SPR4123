@@ -37,7 +37,7 @@ BOOL APIENTRY DllMain (HANDLE  hModule,
   return TRUE;
 }
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 
 /*--------------------------------------------------------------------------*/
 DRIVERMODEL_API  int  DriverModelGetValue (long   type, 
@@ -63,7 +63,30 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
       return 1;
     case DRIVER_DATA_VEH_DESIRED_VELOCITY   :
      /* *double_value = current_velocity + current_acceleration * time_step; */
-		*double_value = desired_velocity;
+		if (DataMap[VehicleID].isTransitionOddZoneGoingOn()) {
+			auto curVehicle = DataMap[VehicleID];
+			bool isWithinOddZone = curVehicle.isCoordinateWithinOddZone(curVehicle.x_coordinate, curVehicle.y_coordinate);
+			if (isWithinOddZone) {
+				if (curVehicle.getDesiredVelocityStep() - curVehicle.getDesiredVelocityFinal() >= 0.1) {
+					curVehicle.setDesiredVelocityStep(VehicleData::getNextDesiredVelocityStep(curVehicle.getDesiredVelocityInitial(),
+						curVehicle.getDesiredVelocityFinal(), curVehicle.getDesiredVelocityStep()));
+				}
+				*double_value = curVehicle.getDesiredVelocityStep();
+			}
+			else {
+				if (curVehicle.getDesiredVelocityInitial() - curVehicle.getDesiredVelocityStep() >= 0.1) {
+					curVehicle.setDesiredVelocityStep(VehicleData::getNextDesiredVelocityStep(curVehicle.getDesiredVelocityFinal(),
+						curVehicle.getDesiredVelocityInitial(), curVehicle.getDesiredVelocityStep()));
+				}
+				else {
+					DataMap[VehicleID].setTransitionOddZone(false);
+				}
+				*double_value = curVehicle.getDesiredVelocityStep();
+			}
+		}
+		else {
+			*double_value = desired_velocity;
+		}
       return 1;
     case DRIVER_DATA_VEH_COLOR :
 		*long_value = vehicle_color;
@@ -72,32 +95,37 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
       *long_value = 1;
       return 1;
     case DRIVER_DATA_DESIRED_ACCELERATION :
-		//*double_value = desired_acceleration;
-		//if (DataMap[VehicleID].Lane_change_in_progress == true)
-		//{
-			//return desired_acceleration;
-		//}
-		//else
-		CalculateAccChange(double_value);
+    		CalculateAccChange(double_value);
 		return 1;
     case DRIVER_DATA_DESIRED_LANE_ANGLE :
-		//if (DataMap[VehicleID].active_lane_change != 0) {
-		//	*double_value = desired_angle;
-		//	/*lane_change_in_progress = 1;*/
-		//}
-
-		if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		if (cur_link == 2 || cur_link == 63 || cur_link == 5 || cur_link == 82 || cur_link == 1)
 		{
 			*double_value = desired_angle;
-			
 		}
-
+		else if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (vehicleLaneChangeMap[VehicleID] != 0)
+				*double_value = desired_angle;
+			else
+				DetermineLatPosValue(double_value);
+		}
+		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		{
+			*double_value = desired_angle;
+		}
 		else {
 			DetermineLatPosValue(double_value);
 		}
 		return 1;
     case DRIVER_DATA_ACTIVE_LANE_CHANGE :
-		DetermineLaneChangeValue(long_value);
+		if (vehicleLaneChangeMap.find(VehicleID) == vehicleLaneChangeMap.end()) {
+			*long_value = 0;
+		}
+		else if (vehicleLaneChangeMap[VehicleID] == 0) {
+			*long_value = 0;
+		}
+		else {
+			DetermineLaneChangeValue(long_value);
+		}
     
       return 1;
     case DRIVER_DATA_REL_TARGET_LANE :

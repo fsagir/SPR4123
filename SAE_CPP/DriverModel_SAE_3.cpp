@@ -38,7 +38,7 @@ BOOL APIENTRY DllMain(HANDLE  hModule,
 	return TRUE;
 }
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 
 /*--------------------------------------------------------------------------*/
 DRIVERMODEL_API  int  DriverModelGetValue(long   type,
@@ -52,9 +52,6 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 	/* and possibly <index2>, and writes that value to <*double_value>,     */
 	/* <*float_value> or <**string_value> (object and value selection depending on <type>).       */
 	/* Return value is 1 on success, otherwise 0.                           */
-
-
-
 	switch (type) {
 	case DRIVER_DATA_STATUS:
 		*long_value = 0;
@@ -63,7 +60,6 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		*long_value = turning_indicator;
 		return 1;
 	case DRIVER_DATA_VEH_DESIRED_VELOCITY:
-		/* *double_value = current_velocity + current_acceleration * time_step; */
 		*double_value = desired_velocity;
 		return 1;
 	case DRIVER_DATA_VEH_COLOR:
@@ -73,39 +69,39 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		*long_value = 1;
 		return 1;
 	case DRIVER_DATA_DESIRED_ACCELERATION:
-
-		CalculateAccChange(double_value);
-
+		calculate_acceleration(double_value);
 		return 1;
-		//case DRIVER_DATA_DESIRED_LANE_ANGLE:
-		//	/**double_value = desired_lane_angle;
-		//	return 1;*/
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
-		/*RandomValue *= 100;*/
-
-		if (active_lane_change != 0) {
+		/*if (cur_link == 2 || cur_link == 63 || cur_link == 5 || cur_link == 82 || cur_link == 1)
+		{
 			*double_value = desired_angle;
-			/*lane_change_in_progress = 1;*/
+		}*/
+		 if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (vehicleLaneChangeMap[VehicleID] != 0)
+				*double_value = desired_angle;
+			else
+				DetermineLatPosValue(double_value);
 		}
-
 		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
 		{
 			*double_value = desired_angle;
 		}
-
 		else {
 			DetermineLatPosValue(double_value);
 		}
-
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-
-
-		DetermineLaneChangeValue(long_value);
-
+		if (vehicleLaneChangeMap.find(VehicleID) == vehicleLaneChangeMap.end()) {
+			*long_value = 0;
+		}
+		else if (vehicleLaneChangeMap[VehicleID] == 0) {
+			*long_value = 0;
+		}
+		else {
+			DetermineLaneChangeValue(long_value);
+		}
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
-		/**long_value = (rand() % 3) - 1;*/
 		return 1;
 	case DRIVER_DATA_SIMPLE_LANECHANGE:
 		*long_value = 1;

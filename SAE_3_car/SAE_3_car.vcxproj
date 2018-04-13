@@ -152,11 +152,13 @@
     <ClCompile Include="..\DataMap.cpp" />
     <ClCompile Include="..\SAE_CPP\DriverModel_SAE_3.cpp" />
     <ClCompile Include="..\Simulation_Data.cpp" />
+    <ClCompile Include="..\Utils.cpp" />
     <ClCompile Include="IDM_acc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DriverModel.h" />
     <ClInclude Include="..\Simulation_Data.h" />
+    <ClInclude Include="..\Utils.h" />
     <ClInclude Include="..\Vehicle_data.h" />
     <ClInclude Include="IDM_acc.h" />
   </ItemGroup>

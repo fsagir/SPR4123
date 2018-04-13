@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="$(solutiondir)DriverModel.h" />
     <ClInclude Include="..\Simulation_Data.h" />
+    <ClInclude Include="..\Utils.h" />
     <ClInclude Include="..\Vehicle_data.h" />
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +159,7 @@
     <ClCompile Include="..\IDM_acc.cpp" />
     <ClCompile Include="..\SAE_CPP\DriverModel_SAE_0.cpp" />
     <ClCompile Include="..\Simulation_Data.cpp" />
+    <ClCompile Include="..\Utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

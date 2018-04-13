@@ -16,6 +16,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="$(solutiondir)DriverModel.h" />
+    <ClInclude Include="..\Utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\DataMap.cpp">
@@ -28,6 +31,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\IDM_acc.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Utils.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,6 +3,7 @@
 #include "DriverModel.h"
 // Include the header file for simulation logging / Data output
 #include "Vehicle_data.h"
+#include "Utils.h"
 //Standard C++ Header files for mathematics and dynamic contigious arrays.
 #include <cmath>
 #include <vector>
@@ -23,7 +24,6 @@ extern long    vehicle_color ;
 extern double  current_velocity ;
 extern double  current_acceleration ;
 extern double  time_step ;
-extern double  a ;
 extern double  b ;
 extern double  jam_distance ;
 extern double  time_headway ;
@@ -118,8 +118,14 @@ extern double desired_angle;
 extern double duration_of_vissim_conrol_on_angle_after_lane_change;
 extern long MOBIL_active_lane_change;
 extern long lane_change_for_SAE_level;
-
-
+extern double distance_from_signal;
+extern long signal_state;
+extern long priority_rule;
+extern double distance_from_stopline;
+extern double x_coordinate_rear;
+extern double error_variance;
+extern double error_term;
+extern double alpha;
 
 
 void DetrimeAccValue(double * double_value);
@@ -130,3 +136,7 @@ void DetermineLaneChangeValue(long * long_value);
 void CalculateAutomatedLaneChange(long* long_value);
 
 void CalculateAccChange(double * double_value);
+
+void calculate_acceleration(double * double_value);
+void stopping_criteria(double * double_value);
+void calculate_deceleration(double * double_value);

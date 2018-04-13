@@ -30,7 +30,7 @@ BOOL APIENTRY DllMain(HANDLE  hModule,
 	return TRUE;
 }
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 
 /*--------------------------------------------------------------------------*/
 
@@ -67,18 +67,23 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		*long_value = 1;
 		return 1;
 	case DRIVER_DATA_DESIRED_ACCELERATION:
-
-		CalculateAccChange(double_value);
-
+     		calculate_acceleration(double_value);
 		return 1;
 		//case DRIVER_DATA_DESIRED_LANE_ANGLE:
 		//	*double_value = desired_lane_angle;
 		//	return 1;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
-		/*RandomValue *= 100;*/
-
-		if (active_lane_change != 0) {
+		/*if (cur_link == 2 || cur_link == 63 || cur_link == 5 || cur_link == 82 || cur_link == 1)
+		{
 			*double_value = desired_angle;
+		}*/
+
+		 if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (vehicleLaneChangeMap[VehicleID] != 0)
+				*double_value = desired_angle;
+			else
+				//*double_value = desired_angle;
+				DetermineLatPosValue(double_value);
 			/*lane_change_in_progress = 1;*/
 		}
 
@@ -91,10 +96,12 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 			DetermineLatPosValue(double_value);
 		}
 
-
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-		*long_value = active_lane_change;
+		//if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end())
+		//	*long_value = vehicleLaneChangeMap[VehicleID];
+		//else
+			*long_value = active_lane_change;
 		lane_change_for_SAE_level = active_lane_change;
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:

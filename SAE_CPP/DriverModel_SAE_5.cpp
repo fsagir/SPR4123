@@ -36,7 +36,7 @@ BOOL APIENTRY DllMain (HANDLE  hModule,
   return TRUE;
 }
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 
 /*--------------------------------------------------------------------------*/
 DRIVERMODEL_API  int  DriverModelGetValue (long   type, 
@@ -70,17 +70,37 @@ DRIVERMODEL_API  int  DriverModelGetValue (long   type,
       *long_value = 1;
       return 1;
     case DRIVER_DATA_DESIRED_ACCELERATION :
-
 		CalculateAccChange(double_value);
-		
 		return 1;
     case DRIVER_DATA_DESIRED_LANE_ANGLE :
-		DetermineLatPosValue(double_value);
-
+		if (cur_link == 2 || cur_link == 63 || cur_link == 5|| cur_link == 82 || cur_link == 1 )
+		{
+			*double_value = desired_angle;
+		}
+		else if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (vehicleLaneChangeMap[VehicleID] != 0)
+				*double_value = desired_angle;
+			else
+				DetermineLatPosValue(double_value);
+		}
+		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+		{
+			*double_value = desired_angle;
+		}
+		else {
+			DetermineLatPosValue(double_value);
+		}
 		return 1;
     case DRIVER_DATA_ACTIVE_LANE_CHANGE :
-		DetermineLaneChangeValue(long_value);
-    
+		if (vehicleLaneChangeMap.find(VehicleID) == vehicleLaneChangeMap.end()) {
+			*long_value = 0;
+		}
+		else if (vehicleLaneChangeMap[VehicleID] == 0) {
+			*long_value = 0;
+		}
+		else {
+			DetermineLaneChangeValue(long_value);
+		}
       return 1;
     case DRIVER_DATA_REL_TARGET_LANE :
 		/**long_value = (rand() % 3) - 1;*/
