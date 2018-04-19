@@ -123,7 +123,8 @@ void DataSetValue(long   type,
 
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		if (lane_change_for_SAE_level != 0)
+		DataMap[VehicleID].active_lane_change = long_value;
+		if (DataMap[VehicleID].active_lane_change != 0)
 		{
 			if (DataMap[VehicleID].Lane_change_in_progress == false)
 			{
