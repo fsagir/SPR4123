@@ -15,7 +15,7 @@ double k = 0.0;
 
 //Implemention of extern variable in Vehicle_data.h
 std::map<int, VehicleData> DataMap; //This stores the vehicle data
-
+extern std::map<int, long> vehicleLaneChangeMap;
 
 //Datasetvalue function implementation (details can be found in Vehicle_data.h)
 void DataSetValue(long   type,
@@ -123,32 +123,21 @@ void DataSetValue(long   type,
 
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		DataMap[VehicleID].active_lane_change = long_value;
-		if (DataMap[VehicleID].active_lane_change != 0)
-		{
-			if (DataMap[VehicleID].Lane_change_in_progress == false)
-			{
+		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (!DataMap[VehicleID].Lane_change_in_progress && vehicleLaneChangeMap[VehicleID] != 0) {
 				DataMap[VehicleID].Change_volume = 1;
+				DataMap[VehicleID].Lane_change_in_progress = true;
 			}
-			else
-			{
+			else if (DataMap[VehicleID].Lane_change_in_progress && vehicleLaneChangeMap[VehicleID] != 0) {
 				DataMap[VehicleID].Change_volume = 0;
+				DataMap[VehicleID].Lane_change_in_progress = true;
 			}
-			DataMap[VehicleID].Lane_change_in_progress = true;
-		}
-		else
-		{   
-			if (DataMap[VehicleID].Lane_change_in_progress == true)
-			{
-				DataMap[VehicleID].Time_of_completion_of_lane_change = current_time;
-				DataMap[VehicleID].Time_of_change_of_control_on_lane_angle = DataMap[VehicleID].Time_of_completion_of_lane_change + duration_of_vissim_conrol_on_angle_after_lane_change;
-				k = DataMap[VehicleID].Time_of_completion_of_lane_change + duration_of_vissim_conrol_on_angle_after_lane_change;
-				
+			else {
+				DataMap[VehicleID].Change_volume = 0;
+				DataMap[VehicleID].Lane_change_in_progress = false;
 			}
-
-			DataMap[VehicleID].Lane_change_in_progress = false;
-			
 		}
+		break;
 	case DRIVER_DATA_VEH_LANE_ANGLE:
 		DataMap[VehicleID].Cur_veh_angle = double_value;
 		break;
@@ -242,23 +231,24 @@ void StoreVehicleFrame(VehicleData & DataPoint)
 		//	a plain-text format.
 
 		std::stringstream SS;
-		SS << DataPoint.VehicleID << ','
+		SS << DataPoint.current_time << ','
+			<< DataPoint.VehicleID << ','
+			<< DataPoint.cur_link << ','
+			<< DataPoint.cur_veh_lane << ','
+			<< DataPoint.x_coordinate << ','
+			<< DataPoint.y_coordinate << ','
+			<< DataPoint.x_coordinate_rear << ','
+			<< DataPoint.y_coordinate_rear << ','
+			<< DataPoint.length << ','
+			<< DataPoint.width << ','
+			<< DataPoint.current_velocity << ','
+			<< DataPoint.current_acceleration << ','
 			<< DataPoint.vehicle_type << ','
 			<< DataPoint.Initial_link << ','
 			<< DataPoint.Initial_Lane << ','
-			<< DataPoint.final_link << ','
-			<< DataPoint.current_time << ','
-			<< DataPoint.current_acceleration << ','
-			<< DataPoint.current_velocity << ','
-			<< DataPoint.relative_distance << ','
-			<< DataPoint.x_coordinate << ','
-			<< DataPoint.y_coordinate << ','
-			<< VehicleData::Volume << ','
+			<< DataPoint.Change_volume << ','
+			<< DataPoint.Cur_veh_angle << ','
 			<< DataPoint.lateral_position << ','
-			<< DataPoint.desired_lane_angle << ','
-			//		<< DataPoint.Cur_veh_angle << ','
-			<< DataPoint.Random_value << ','
-			<< DataPoint.Change_volume
 
 			<< '\n';
 		//Take resulting stream and save to a single String.
@@ -313,23 +303,233 @@ void StoreSituationData(int Veh)
 
 
 //Implementation of constructor
-VehicleData::VehicleData() : Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false)
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+VehicleData::VehicleData() : a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), isOddZoneTransitionActive(false), desired_velocity_initial(0), desired_velocity_final(0), desired_velocity_current(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
+#else
+VehicleData::VehicleData() : a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
+#endif
 {
 	y1 = 0;
 	y2 = 0;
 	y3 = 0;
 	future_lateral_position = 0;
 	level_shift = Automated_Control;
-	time_to_shift= 0.0;
-	Time_of_completion_of_lane_change =0.0;
-	Time_of_change_of_control_on_lane_angle =0.0;
-};
+	time_to_shift = 0.0;
+	Time_of_completion_of_lane_change = 0.0;
+	Time_of_change_of_control_on_lane_angle = 0.0;
+	deceleration_at_signal = 0.0;
+	/*a = utils::NormalDistribution::getTruncatedLogNormalDouble(A_VD_MEAN, A_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
+	b = utils::NormalDistribution::getTruncatedLogNormalDouble(B_VD_MEAN, B_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());*/
+	a = 1.4;
+	b = 2;
+	/*a = 1.5;*/
+	deceleration_to_yeild = 0.0;
+	x_coordinate_rear = 0.0;
+	desired_velocity_previous_time_step = 0.0;
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+	initOddZones();
+#endif
+}
+
+VehicleData::VehicleData(const VehicleData & oldObj) {
+	a = oldObj.a;
+	b = oldObj.b;
+	curLaneCount = oldObj.curLaneCount;
+	distanceFromSignal = oldObj.distanceFromSignal;
+	signalState = oldObj.signalState;
+	curLink = oldObj.curLink;
+	curLane = oldObj.curLane;
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+	isOddZoneTransitionActive = oldObj.isOddZoneTransitionActive;
+	desired_velocity_initial = oldObj.desired_velocity_initial;
+	desired_velocity_final = oldObj.desired_velocity_final;
+	desired_velocity_current = oldObj.desired_velocity_current;
+	for (auto it = oldObj.oddZones.begin(); it != oldObj.oddZones.end(); it++) {
+		oddZones.push_back(*it);
+	}
+#endif
+	VehicleID = oldObj.VehicleID;
+	lateral_position = oldObj.lateral_position;
+	desired_lane_angle = oldObj.desired_lane_angle;
+	Cur_veh_angle = oldObj.Cur_veh_angle;
+	Random_value = oldObj.Random_value;
+	current_time = oldObj.current_time;
+	current_velocity = oldObj.current_velocity;
+	current_acceleration = oldObj.current_acceleration;
+	x_coordinate = oldObj.x_coordinate;
+	y_coordinate = oldObj.y_coordinate;
+	x_coordinate_rear = oldObj.x_coordinate_rear;
+	relative_distance = oldObj.relative_distance;
+	Initial_Lane = oldObj.Initial_Lane;
+	vehicle_type = oldObj.vehicle_type;
+	lane_set = oldObj.lane_set;
+	final_link_set = oldObj.final_link_set;
+	link_set = oldObj.link_set;
+	Volume_set = oldObj.Volume_set;
+	Initial_link = oldObj.Initial_link;
+	final_link = oldObj.final_link;
+	active_lane_change = oldObj.active_lane_change;
+	Change_volume = oldObj.Change_volume;
+	Lane_change_in_progress = oldObj.Lane_change_in_progress;
+	y1 = oldObj.y1;
+	y2 = oldObj.y2;
+	y3 = oldObj.y3;
+	future_lateral_position = oldObj.future_lateral_position;
+	level_shift = oldObj.level_shift;
+	time_to_shift = oldObj.time_to_shift;
+	Time_of_completion_of_lane_change = oldObj.Time_of_completion_of_lane_change;
+	Time_of_change_of_control_on_lane_angle = oldObj.Time_of_change_of_control_on_lane_angle;
+	decided_to_stop_at_signal = oldObj.decided_to_stop_at_signal;
+	decided_to_yeild = oldObj.decided_to_yeild;
+	deceleration_at_signal = oldObj.deceleration_at_signal;
+	deceleration_to_yeild = oldObj.deceleration_to_yeild;
+	cur_link = oldObj.cur_link;
+	cur_veh_lane = oldObj.cur_veh_lane;
+	y_coordinate_rear = oldObj.y_coordinate_rear;
+	length = oldObj.length;
+	width = oldObj.width;
+}
+
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+void VehicleData::initOddZones() {
+	oddZones.push_back(std::pair<double, double>(0, 300));
+}
+
+void VehicleData::setDesiredVelocityIntial(double value) {
+	desired_velocity_initial = value;
+}
+
+double VehicleData::getDesiredVelocityInitial() {
+	return desired_velocity_initial;
+}
+void VehicleData::setDesiredVelocityFinal(double value) {
+	desired_velocity_final = value;
+}
+double VehicleData::getDesiredVelocityFinal() {
+	return desired_velocity_final;
+}
+void VehicleData::setDesiredVelocityStep(double value) {
+	desired_velocity_current = value;
+}
+double VehicleData::getDesiredVelocityStep() {
+	return desired_velocity_current;
+}
+double VehicleData::getNextDesiredVelocityStep(double velo_initial, double velo_final, double velo_current) {
+	return velo_initial - ((velo_initial - velo_final) /
+		(1 + exp(6 * velo_current - (velo_initial + velo_final) / 2)));
+}
+
+bool VehicleData::isTransitionOddZoneGoingOn() {
+	return isOddZoneTransitionActive;
+}
+
+void VehicleData::setTransitionOddZone(bool value) {
+	isOddZoneTransitionActive = value;
+}
+
+bool VehicleData::isCoordinateWithinOddZone(double x, double y) {
+	for (auto it = oddZones.begin(); it != oddZones.end(); it++) {
+		if (it->first <= x && x <= it->second)
+			return true;
+	}
+	return false;
+}
+#endif
+
+
+//std::map<long, std::map<long, std::vector<VehicleData>>> VehicleData::getVehicleDistanceFromSignal() {
+//	std::map<long, std::map<long, std::vector<VehicleData>>> retValue;
+//	for (auto it = DataMap.begin(); it != DataMap.end(); it++) {
+//		if (it->second.getDistanceFromSignal() < 0) // no visible signal ahead so ignore it
+//			continue;
+//		retValue[it->second.getCurLink()][it->second.getCurLane()].push_back(it->second);
+//	}
+//
+//	for (auto it = retValue.begin(); it != retValue.end(); it++) {
+//		for (auto sit = it->second.begin(); sit != it->second.end(); sit++) {
+//			std::sort(sit->second.begin(), sit->second.end(), [](VehicleData a, VehicleData b) {
+//				return a.getDistanceFromSignal() < b.getDistanceFromSignal();
+//			});
+//		}
+//	}
+//
+//	return retValue;
+//}
+//
+//std::vector<VehicleData> VehicleData::getVehicleDistanceFromSignal(long linkNumber, long laneNumber) {
+//	// call this method like VehicleData::getVehicleDistanceFromSignal(2, 3); 2nd link 3rd lane
+//	// use for loop to loop throught the returned value
+//	// for(int i=0; i < ret.size(); i++) {
+//	//		ret[i].getDistanceFromSignal(); // 0 is the lowest distance, 1 is 2nd, 2 is third and so on
+//	// }
+//	auto retVal = VehicleData::getVehicleDistanceFromSignal();
+//	if (retVal.find(linkNumber) == retVal.end())
+//		return std::vector<VehicleData>(); // return empty array()
+//	auto linkValues = retVal[linkNumber];
+//	if (linkValues.find(laneNumber) == linkValues.end())
+//		return std::vector<VehicleData>(); // return empty array()
+//	return linkValues[laneNumber];
+//}
+
+void VehicleData::setCurLane(long curLane) {
+	this->curLane = curLane;
+}
+long VehicleData::getCurLane() {
+	return this->curLane;
+}
+
+void VehicleData::setCurLink(long curLink) {
+	this->curLink = curLink;
+}
+
+long VehicleData::getCurLink() {
+	return this->curLink;
+}
+
+double VehicleData::getConstA() {
+	return a;
+}
+
+double VehicleData::getConstB() {
+	return b;
+}
+
+void VehicleData::setLaneCount(int laneNumber) {
+	this->curLaneCount = laneNumber;
+}
+
+int VehicleData::getLaneCount() {
+	return this->curLaneCount;
+}
+
+bool VehicleData::isCurLaneLeftMost(long curLane) {
+	return curLane == curLaneCount;
+}
+
+bool VehicleData::isCurLaneRightMost(long curLane) {
+	return curLane == 1; // is the the rightmost lane == 1
+}
+
+void VehicleData::setDistanceFromSignal(double distance) {
+	this->distanceFromSignal = distance;
+}
+double VehicleData::getDistanceFromSignal() {
+	return this->distanceFromSignal;
+}
+
+void VehicleData::setSignalState(long state) {
+	this->signalState = state;
+}
+
+long VehicleData::getSignalState() {
+	return this->signalState;
+}
+
 //initialisation of static-volume property to zero.
 uint32_t VehicleData::Volume = 0;
 
 double VehicleData::LateralDeviation()
 {
-
 	//generate seed value from time
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	//seed random generator
@@ -346,7 +546,7 @@ double VehicleData::LateralDeviation()
 	y2 = y1;
 	y1 = lateral_position;
 	static const double Gamma0 = 0.63;
-	static const double Gamma1 = 2.29;
+	static const double Gamma1 = 2.26;
 	static const double Beta1 = 0.055;
 	static const double Beta2 = 0.47;
 	static const double Beta3 = 0.48;
@@ -362,10 +562,10 @@ double VehicleData::LateralDeviation()
 		I_t = 0;
 
 	future_lateral_position = Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t;
-	if (lateral_position >= 1.5|| lateral_position <= -1.5 || future_lateral_position >=1.5 || future_lateral_position <= -1.5)
+	if (lateral_position >= 1.5 || lateral_position <= -1.5 || future_lateral_position >= 1.5 || future_lateral_position <= -1.5)
 		return 0;
 	/*	future_lateral_position = abs((Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t)*10/current_velocity);*/
-	else 
+	else
 		return future_lateral_position;
 	//return future_lateral_position;// / (current_velocity * 10000000000000000000);
 	//return 0;

@@ -21,6 +21,8 @@ double  current_velocity = 0.0;
 double  current_acceleration = 0.0;
 double  time_step = 0.0;
 
+std::map<int, long> vehicleLaneChangeMap;
+
 //Default values depend on preprocessor Macro (set in project configuration)
 #ifdef SAE0_CAR
 double  a = 1.4;
@@ -81,7 +83,7 @@ double  acc_cah = 0.0;
 double  acc_acc = 0.0;
 double  effective_acc = 0.0;
 long    heaviside_step = 0;
-double  c = 0.1;
+double  c = 0.9;
 double  b_safe = 4.0;
 double  time_ln_ch = 0.0;
 int     vehicle_ID_left_upstrm = 0;
@@ -336,14 +338,14 @@ void DetermineLaneChangeValue(long * long_value)
 
 }
 
-
 void CalculateAutomatedLaneChange(long* long_value)
 {
 	lane_change_to_left = 0.0;
 	lane_change_to_right = 0.0;
 	*long_value = 0;
-	if (abs(lateral_position) > 1.75 || current_velocity < desired_velocity/2)
+	if (abs(lateral_position) > 1.75 || current_velocity < desired_velocity / 2)
 	{
+		lateral_position = 1.75;
 		*long_value = 0;
 		DataMap[VehicleID].active_lane_change = 0;
 		lane_change_for_SAE_level = 0;
@@ -368,18 +370,29 @@ void CalculateAutomatedLaneChange(long* long_value)
 	//	}
 	//}
 
-	if (cur_link == 7)
-		number_of_lanes = 2;
-	else
-		number_of_lanes = 1;
+	number_of_lanes = DataMap[VehicleID].getLaneCount();
+
+	if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+		if (vehicleLaneChangeMap[VehicleID] != 0) {
+			*long_value = vehicleLaneChangeMap[VehicleID];
+			DataMap[VehicleID].active_lane_change = *long_value;
+			return;
+		}
+	}
 
 	if (number_of_lanes == 1 || DataMap[vehicle_ID_current_upstrm].Lane_change_in_progress == true
 		|| DataMap[vehicle_ID].Lane_change_in_progress == true
 		|| DataMap[vehicle_ID_current_two_upstream].Lane_change_in_progress == true
 		|| DataMap[vehicle_ID_current_two_downstream].Lane_change_in_progress == true)
 	{
+		/*if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+		*long_value = vehicleLaneChangeMap[VehicleID];
+		DataMap[VehicleID].active_lane_change = *long_value;
+		}
+		else {*/
 		*long_value = 0;
 		DataMap[VehicleID].active_lane_change = 0;
+		//}
 		return;
 	}
 	/*c) Checking for the changed new acceleration of the vehcile behind self when self moves away*/
@@ -394,12 +407,12 @@ void CalculateAutomatedLaneChange(long* long_value)
 	//		jam_distance, time_headway, a, b, space_ratio);
 	//}
 	if (vehicle_ID_current_upstrm > 0)
-		acc_idm_current_upstream = ACC_idm(vehicle_headwy_current_downstrm - vehicle_headwy_current_upstrm, vehicle_length, DataMap[vehicle_ID].current_velocity - DataMap[vehicle_ID_current_upstrm].current_velocity, 
+		acc_idm_current_upstream = ACC_idm(vehicle_headwy_current_downstrm - vehicle_headwy_current_upstrm, vehicle_length, DataMap[vehicle_ID].current_velocity - DataMap[vehicle_ID_current_upstrm].current_velocity,
 			time_ln_ch, DataMap[vehicle_ID_current_upstrm].current_velocity, vehicle_desired_vel_array[vehicle_ID_current_upstrm],
-			jam_distance, time_headway, a,b, space_ratio) - pow(space_ratio, 2);
+			jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio) - pow(space_ratio, 2);
 	else acc_idm_current_upstream = 0;
 
-	if (cur_veh_lane != number_of_lanes /*&& DataMap[vehicle_ID_left_upstrm].Lane_change_in_progress == false
+	if (cur_veh_lane == number_of_lanes /*&& DataMap[vehicle_ID_left_upstrm].Lane_change_in_progress == false
 										&& DataMap[vehicle_ID_left_downstrm].Lane_change_in_progress == false*/)
 	{
 		//leftmost lane
@@ -407,7 +420,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 		/*a) Checking for the changed new acceleration of the upstream vehcile on the left*/
 		if (vehicle_ID_left_upstrm > 0)
 			acc_idm_left_upstream = ACC_idm(-vehicle_headwy_left_upstrm, vehicle_length_left_upstrm, vehicle_rel_spd_left_upstrm,
-				time_ln_ch, DataMap[vehicle_ID_left_upstrm].current_velocity, vehicle_desired_vel_array[vehicle_ID_left_upstrm], jam_distance, time_headway, a, b, space_ratio)
+				time_ln_ch, DataMap[vehicle_ID_left_upstrm].current_velocity, vehicle_desired_vel_array[vehicle_ID_left_upstrm], jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio)
 			- pow(space_ratio, 2);
 		else acc_idm_left_upstream = 0;
 
@@ -429,11 +442,11 @@ void CalculateAutomatedLaneChange(long* long_value)
 		/* checking if the vehicle is the first vehicle*/
 		if (vehicle_ID_left_downstrm == -1) {
 			acc_idm_left_self = ACC_idm(vehicle_headwy_left_downstrm, vehicle_length_left_downstrm, -vehicle_rel_spd_left_downstrm,
-				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, a, b, space_ratio);
+				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio);
 		}
 		else {
 			acc_idm_left_self = ACC_idm(vehicle_headwy_left_downstrm, vehicle_length_left_downstrm, -vehicle_rel_spd_left_downstrm,
-				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, a, b, space_ratio) - pow(space_ratio, 2);
+				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio) - pow(space_ratio, 2);
 		}
 
 		if (!(acc_idm_left_upstream <= -b_safe || acc_idm_left_self <= -b_safe))
@@ -450,7 +463,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 		acc_idm_left_self = 0;
 		lane_change_to_left = 0;
 	}
-	if (cur_veh_lane != 1 /*&& DataMap[vehicle_ID_right_upstrm].Lane_change_in_progress == false
+	if (cur_veh_lane == 1 /*&& DataMap[vehicle_ID_right_upstrm].Lane_change_in_progress == false
 						  && DataMap[vehicle_ID_right_downstrm].Lane_change_in_progress == false*/)
 	{
 		//rightmost lane
@@ -463,7 +476,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 		if (vehicle_ID_right_upstrm > 0)
 			acc_idm_right_upstream = ACC_idm(-vehicle_headwy_right_upstrm, vehicle_length_right_upstrm, vehicle_rel_spd_right_upstrm,
-				time_ln_ch, (current_velocity - vehicle_rel_spd_right_upstrm), vehicle_desired_vel_array[vehicle_ID_right_upstrm], jam_distance, time_headway, a, b, space_ratio)
+				time_ln_ch, (current_velocity - vehicle_rel_spd_right_upstrm), vehicle_desired_vel_array[vehicle_ID_right_upstrm], jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio)
 			- pow(space_ratio, 2);
 		else acc_idm_right_upstream = 0;
 
@@ -476,11 +489,11 @@ void CalculateAutomatedLaneChange(long* long_value)
 		/* checking if the vehicle is the first vehicle*/
 		if (vehicle_ID_right_downstrm == -1) {
 			acc_idm_right_self = ACC_idm(vehicle_headwy_right_downstrm, vehicle_length_right_downstrm, -vehicle_rel_spd_right_downstrm,
-				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, a, b, space_ratio);
+				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio);
 		}
 		else {
 			acc_idm_right_self = ACC_idm(vehicle_headwy_right_downstrm, vehicle_length_right_downstrm, -vehicle_rel_spd_right_downstrm,
-				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, a, b, space_ratio) - pow(space_ratio, 2);
+				time_ln_ch, current_velocity, desired_velocity, jam_distance, time_headway, DataMap[VehicleID].getConstA(), DataMap[VehicleID].getConstB(), space_ratio) - pow(space_ratio, 2);
 		}
 
 		if (!(acc_idm_right_upstream <= -b_safe || acc_idm_right_self <= -b_safe))
@@ -502,29 +515,60 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 
 	if ((lane_change_to_left > lane_change_to_right) && (lane_change_to_left >= acc_thr)) {
-		*long_value = 1;
-		DataMap[VehicleID].active_lane_change = 1;
-		lane_change_for_SAE_level = 1;
-		
+		if (DataMap[VehicleID].isCurLaneLeftMost(cur_veh_lane)) {
+			*long_value = 0;
+			DataMap[VehicleID].active_lane_change = 0;
+			lane_change_for_SAE_level = 0;
+		}
+		else {
+			*long_value = 1;
+			DataMap[VehicleID].active_lane_change = 1;
+			lane_change_for_SAE_level = 1;
+		}
 	}
 	else if ((lane_change_to_right > lane_change_to_left) && (lane_change_to_right >= acc_thr)) {
-		*long_value = -1;
-		DataMap[VehicleID].active_lane_change = -1;
-		lane_change_for_SAE_level = -1;
+		if (DataMap[VehicleID].isCurLaneRightMost(cur_veh_lane)) {
+			*long_value = 0;
+			DataMap[VehicleID].active_lane_change = 0;
+			lane_change_for_SAE_level = 0;
+		}
+		else {
+			*long_value = -1;
+			DataMap[VehicleID].active_lane_change = -1;
+			lane_change_for_SAE_level = -1;
+		}
 	}
 	else if ((lane_change_to_right == lane_change_to_left) && (lane_change_to_right > acc_thr)) {
-		*long_value = 1;
-		DataMap[VehicleID].active_lane_change = 1;
-		lane_change_for_SAE_level = 1;
+		if (DataMap[VehicleID].isCurLaneLeftMost(cur_veh_lane)) {
+			*long_value = -1;
+			DataMap[VehicleID].active_lane_change = -1;
+			lane_change_for_SAE_level = -1;
+		}
+		else {
+			*long_value = 1;
+			DataMap[VehicleID].active_lane_change = 1;
+			lane_change_for_SAE_level = 1;
+		}
 	}
 	else {
-		*long_value = 0;
-		DataMap[VehicleID].active_lane_change = 0;
-		lane_change_for_SAE_level = 0;
+		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			*long_value = vehicleLaneChangeMap[VehicleID];
+			DataMap[VehicleID].active_lane_change = *long_value;
+			lane_change_for_SAE_level = *long_value;
+		}
+		else {
+			*long_value = 0;
+			DataMap[VehicleID].active_lane_change = 0;
+			lane_change_for_SAE_level = 0;
+		}
 	}
+#if defined(SAE0_CAR) || defined(SAE0_TRUCK) || defined(SAE1_CAR) || defined(SAE1_TRUCK) || defined(SAE2_CAR) || defined(SAE2_TRUCK)
+	//if (false == utils::NormalDistribution::flipCoinWithProbability(LANE_CHANGE_PROBABILITY))
+	//	*long_value = 0;
+#endif
+	vehicleLaneChangeMap[VehicleID] = *long_value;
 	//*long_value = (rand() % 3) - 1;
-}
-/*==========================================================================*/
+}/*==========================================================================*/
 
 //Setvalue function is called by VISSIM to provide information to simulation
 
@@ -642,7 +686,12 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		return 0; /* (To avoid getting sent lots of DRIVER_DATA_VEH_NEXT_LINKS messages) */
 				  /* Must return 1 if these messages are to be sent from VISSIM!         */
 	case DRIVER_DATA_VEH_NEXT_LINKS:
+		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
+		if (active_lane_change != 0 && long_value == 0)
+			active_lane_change = 0;
+		vehicleLaneChangeMap[VehicleID] = long_value;
+		break;
 	case DRIVER_DATA_VEH_REL_TARGET_LANE:
 	case DRIVER_DATA_NVEH_ID:
 		/*To identify if any vehicle is in front of the current vehicle*/
@@ -782,7 +831,11 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		desired_lane_angle = double_value;
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-		active_lane_change = long_value;
+		if (long_value != 0)
+			active_lane_change = long_value;
+		else
+			active_lane_change = long_value;
+		vehicleLaneChangeMap[VehicleID] = long_value;
 
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:

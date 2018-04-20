@@ -16,7 +16,7 @@
 #include <random>
 #include <chrono>
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 /*==========================================================================*/
 
 BOOL APIENTRY DllMain(HANDLE  hModule,

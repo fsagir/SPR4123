@@ -2,10 +2,35 @@
 //Include standard C++ files for Standardized Integer sizes (eg: uint32_t) and dynamic assosiative arrays (Map)
 #include <stdint.h>
 #include <map>
+#include <vector>
 enum Level_Shift { Human_Control = 1, Automated_Control = 0 };
+//structure to contain per-vehicle data from the simulation
+
+enum SignalState {
+	SIGNAL_STATE_RED = 1,
+	SIGNAL_STATE_AMBER = 2,
+	SIGNAL_STATE_GREEN = 3,
+	SIGNAL_STATE_OFF = 6,
+};
+
 //structure to contain per-vehicle data from the simulation
 class VehicleData
 {
+	double a;
+	double b;
+	int curLaneCount;
+	double distanceFromSignal;
+	long signalState;
+	long curLink;
+	long curLane;
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+	bool isOddZoneTransitionActive;
+	double desired_velocity_initial;
+	double desired_velocity_final;
+	double desired_velocity_current;
+	std::vector<std::pair<double, double>> oddZones;
+	void initOddZones();
+#endif
 public:
 	long VehicleID;
 	double lateral_position;
@@ -17,6 +42,7 @@ public:
 	double  current_acceleration;
 	double	x_coordinate;
 	double  y_coordinate;
+	double x_coordinate_rear;
 	double relative_distance;
 	long Initial_Lane;
 	long vehicle_type;
@@ -34,6 +60,7 @@ public:
 	static uint32_t Volume;
 	//Constructor to initialise data - defined here, implemented in DataMap.cpp
 	VehicleData();
+	VehicleData(const VehicleData & oldObj);
 	double LateralDeviation();
 	double y1;
 	double y2;
@@ -43,8 +70,50 @@ public:
 	double time_to_shift;
 	double Time_of_completion_of_lane_change;
 	double Time_of_change_of_control_on_lane_angle;
-	
-	
+	bool decided_to_stop_at_signal;
+	bool decided_to_yeild;
+	double deceleration_at_signal;
+	double deceleration_to_yeild;
+	long cur_link;
+	long cur_veh_lane;
+	double y_coordinate_rear;
+	double length;
+	double width;
+	double desired_velocity_previous_time_step;
+
+
+
+
+	double getConstA();
+	double getConstB();
+	void setLaneCount(int laneNumber);
+	int getLaneCount();
+	bool isCurLaneLeftMost(long curLane);
+	bool isCurLaneRightMost(long curLane);
+	void setDistanceFromSignal(double distance);
+	double getDistanceFromSignal();
+	void setSignalState(long state);
+	long getSignalState();
+	void setCurLink(long curLink);
+	long getCurLink();
+	void setCurLane(long curLane);
+	long getCurLane();
+
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+	void setDesiredVelocityIntial(double value);
+	double getDesiredVelocityInitial();
+	void setDesiredVelocityFinal(double value);
+	double getDesiredVelocityFinal();
+	void setDesiredVelocityStep(double value);
+	double getDesiredVelocityStep();
+	static double getNextDesiredVelocityStep(double velo_initial, double velo_final, double velo_current);
+	bool isTransitionOddZoneGoingOn();
+	void setTransitionOddZone(bool value);
+	bool isCoordinateWithinOddZone(double x, double y);
+#endif
+
+	static std::map<long, std::map<long, std::vector<VehicleData>>> getVehicleDistanceFromSignal();
+	static std::vector<VehicleData> getVehicleDistanceFromSignal(long linkNumber, long laneNumber);
 };
 //Extern Map containing a list of all vehicles in the simulation, int is used as a Key value, and the
 //	above declared VehicleData structure as the value. Allows for reference.

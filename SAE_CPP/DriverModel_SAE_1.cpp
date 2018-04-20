@@ -14,7 +14,7 @@
 #include <random>
 #include <chrono>
 
-
+extern std::map<int, long> vehicleLaneChangeMap;
 ///*==========================================================================*/
 
 BOOL APIENTRY DllMain(HANDLE  hModule,
@@ -70,44 +70,24 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 
 		return 1;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
-		/*RandomValue *= 100;*/
 		
-		
-		if (active_lane_change != 0){
-			*double_value = desired_angle;
+		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
+			if (vehicleLaneChangeMap[VehicleID] != 0)
+				*double_value = desired_angle;
+			else
+				//*double_value = desired_angle;
+				DetermineLatPosValue(double_value);
 			/*lane_change_in_progress = 1;*/
 		}
-		
-		else if(current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
+
+		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
 		{
 			*double_value = desired_angle;
 		}
 
 		else {
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
-			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
-			}
-
-			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
+			DetermineLatPosValue(double_value);
 		}
-		//if (desired_lane_angle >= 0)
-		//{
-		//	*double_value = RandomValue;
-		//}
-		//else
-		//{
-		//	*double_value = -RandomValue;
-
-		//}
-
-		//if (lane_change_in_progress == 1 && active_lane_change == 0)
-		//{
-		//	lane_change_in_progress = 0;
-		//	completion_of_lane_change = 1;
-		//	change_of_control_on_angle_time = current_time + duration_of_vissim_conrol_on_angle_after_lane_change;
-		//}
 
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
