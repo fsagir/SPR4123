@@ -16,7 +16,6 @@
 #include <random>
 #include <chrono>
 
-extern std::map<int, long> vehicleLaneChangeMap;
 /*==========================================================================*/
 
 BOOL APIENTRY DllMain(HANDLE  hModule,
@@ -140,3 +139,5 @@ DRIVERMODEL_API  int  DriverModelExecuteCommand(long number)
 /*  Ende of DriverModel.cpp                                                 */
 /*==========================================================================*/
 
+/* Specialized Implementation */
+Level_Shift_t levelShiftDef = { Fixed_Init_Auto_Transition_Allowed, Fixed_Init_Auto_Transition_Allowed, Fixed_Init_Auto_Transition_Allowed };

@@ -118,3 +118,5 @@ DRIVERMODEL_API  int  DriverModelExecuteCommand (long number)
 /*  Ende of DriverModel.cpp                                                 */
 /*==========================================================================*/
 
+/* Specialized Implementation */
+Level_Shift_t levelShiftDef = { Fixed_Auto, Fixed_Auto, Fixed_Auto };

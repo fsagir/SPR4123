@@ -8,18 +8,14 @@ namespace utils {
 
 	void NormalDistribution::initHighwayData() {
 		highwayLinks[7] = true;
+		
 		isHighwayDataInitialized = true;
 	}
 
 	bool NormalDistribution::isVehicleOnHighway(VehicleData * vehicle) {
-#if defined(SAE1_CAR) || defined(SAE2_CAR) || defined(SAE1_TRUCK) || defined(SAE2_TRUCK)
-		return true;
-#else
 		while (!isHighwayDataInitialized)
 			initHighwayData();
 		return highwayLinks.find(vehicle->getCurLink()) != highwayLinks.end();
-#endif
-
 	}
 
 	NormalDistribution::NormalDistribution(double mean, double variance) : m_mean(mean), m_variance(variance) {

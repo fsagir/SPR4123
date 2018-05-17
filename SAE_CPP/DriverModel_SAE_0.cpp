@@ -13,7 +13,6 @@
 #include <cmath>
 #include <random>
 #include <chrono>
-extern std::map<int, long> vehicleLaneChangeMap;
 
 BOOL APIENTRY DllMain(HANDLE  hModule,
 	DWORD   ul_reason_for_call,
@@ -135,3 +134,5 @@ DRIVERMODEL_API  int  DriverModelExecuteCommand(long number)
 /*  Ende of DriverModel.cpp                                                 */
 /*==========================================================================*/
 
+/* Specialized Implementation */
+Level_Shift_t levelShiftDef = { Fixed_Human, Fixed_Human, Fixed_Human };

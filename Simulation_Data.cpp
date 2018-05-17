@@ -5,6 +5,7 @@
 #include <random>
 #include <chrono>
 #include <algorithm>
+#include <Utils.h>
 
 //Variables declared here are defined in Simulation_Data.h
 long		cur_link = -1;
@@ -20,8 +21,6 @@ long    vehicle_color = RGB(0, 0, 0);
 double  current_velocity = 0.0;
 double  current_acceleration = 0.0;
 double  time_step = 0.0;
-
-std::map<int, long> vehicleLaneChangeMap;
 
 //Default values depend on preprocessor Macro (set in project configuration)
 #ifdef SAE0_CAR
@@ -83,7 +82,7 @@ double  acc_cah = 0.0;
 double  acc_acc = 0.0;
 double  effective_acc = 0.0;
 long    heaviside_step = 0;
-double  c = 0.9;
+double  c = 0.99;
 double  b_safe = 4.0;
 double  time_ln_ch = 0.0;
 int     vehicle_ID_left_upstrm = 0;
@@ -139,7 +138,7 @@ double  acc_idm_current_upstream = 0.0;
 double  p = 1;
 double  acc_thr_human = 1;
 double  acc_thr_system = .5;
-double acc_thr = 2;
+double acc_thr = 0.02;
 double lane_change_to_left = 0.0;
 double lane_change_to_right = 0.0;
 double current_time = 0.0;
@@ -159,16 +158,22 @@ long MOBIL_active_lane_change = 0;
 long lane_change_for_SAE_level = 0;
 
 
+
 void CalculateAccChange(double * double_value)
 {
 	/* Calculation of IDM acceleration - SAE Level 0 */
 
 
 	space_headway = relative_distance - vehicle_length;
-	if (cur_link != 7) {
+#if defined(SAE4_CAR)
+	if (DataMap[VehicleID].isCoordinateWithinOddZone(x_coordinate, y_coordinate)) {
+		desired_velocity = desired_velocity *1/2;
+	}
+#endif
+	/*if (cur_link != 7) {
 
 	desired_velocity = 11.2 + (desired_velocity - 24.4) / (36.12 -24.4) * (15.6-11.2);
-	}
+	}*/
 	ratio = current_velocity / desired_velocity;
 	desired_space_headway = jam_distance + current_velocity * time_headway + 0.5 * current_velocity * relative_velocity / sqrt(a * b);
 	space_ratio = desired_space_headway / space_headway;
@@ -179,10 +184,8 @@ void CalculateAccChange(double * double_value)
 	else {
 		acc_idm = a * (1 - ratio * ratio * ratio * ratio - space_ratio * space_ratio);
 	}
-#if defined(SAE0_CAR) || defined(SAE0_TRUCK)
 
 		*double_value = acc_idm;
-#else
 		/* Calculation of CAH acceleration - will be used to calculate ACC acceleration */
 		if (leading_veh_acc > a) {
 			effective_acc = a;
@@ -222,15 +225,18 @@ void CalculateAccChange(double * double_value)
 
 			acc_acc = (1 - c) * acc_idm + c * (acc_cah + b * tanh((acc_idm - acc_cah) / b));
 
-			if (acc_acc < acc_idm) {
-				acc_acc = acc_idm;
 			}
-			/*acc_acc = (1 - c) * acc_idm + c * acc_cah;*/
-		}
+			
+		
 
 		//Call to detirmine acceleration 
 		DetrimeAccValue(double_value);
-#endif
+		if (DataMap[VehicleID].getLevelShiftAcc() == Human_Control || DataMap[VehicleID].getLevelShiftAcc() == TransitionToAuto_Control) {
+			*double_value = acc_idm;
+		}
+		else if (DataMap[VehicleID].getLevelShiftAcc() == Automated_Control || DataMap[VehicleID].getLevelShiftAcc() == TransitionToHuman_Control) {
+			*double_value = acc_acc;
+		}
 }
 
 //Function to detirmine acceleration value
@@ -240,6 +246,7 @@ void DetrimeAccValue(double * double_value)
 	{
 		StoreSituationData(VehicleID);
 	}
+	/*
 	if (DataMap[VehicleID].level_shift == Human_Control)
 	{
 		if (current_time > DataMap[VehicleID].time_to_shift)
@@ -254,86 +261,96 @@ void DetrimeAccValue(double * double_value)
 		else
 			*double_value = acc_idm;
 	}
-
+	*/
+// force auto acceleration for SAE1 and SAE2
+#if defined(SAE1_CAR) || defined(SAE2_CAR)
+	*double_value = acc_acc;
+#endif
 }
 
 void DetermineLatPosValue(double * double_value)
 {
 
-	if (DataMap[VehicleID].level_shift == Human_Control )
+	if (DataMap[VehicleID].getLevelShiftLaneCentering() == Human_Control || DataMap[VehicleID].getLevelShiftLaneCentering() == TransitionToAuto_Control)
 	{
-		if (current_time > DataMap[VehicleID].time_to_shift)
+		DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * 1 / current_velocity;
+		if (DataMap[VehicleID].Random_value <= 0) {
+			*double_value = max(DataMap[VehicleID].Random_value, -.2);
+		}
+		else {
+			*double_value = min(DataMap[VehicleID].Random_value, .2);
+		}
+		/*if (current_time > DataMap[VehicleID].time_to_shift)
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 *.5 / current_velocity <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity, .2);
 		}			//*double_value = desired_lane_angle;
 		else
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80 <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * 1 / current_velocity <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * 1 / current_velocity, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * 1 / current_velocity, .2);
 			
-		}
+		}*/
 	}
-	else if (DataMap[VehicleID].level_shift == Automated_Control )
+	else if (DataMap[VehicleID].getLevelShiftLaneCentering() == Automated_Control || DataMap[VehicleID].getLevelShiftLaneCentering() == TransitionToHuman_Control)
 	{
-		if (current_time > DataMap[VehicleID].time_to_shift)
+		DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .1 / current_velocity;
+		if (DataMap[VehicleID].Random_value <= 0) {
+			*double_value = max(DataMap[VehicleID].Random_value, -.2);
+		}
+		else {
+			*double_value = min(DataMap[VehicleID].Random_value, .2);
+		}
+		/*if (current_time > DataMap[VehicleID].time_to_shift)
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80 <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 2 / 80, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity, .2);
 
 		}
 		else
 		{
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
+			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity <= 0)
 			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
+				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5/ current_velocity, -.2);
 			}
 
 			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
+				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 * .5 / current_velocity, .2);
 		}
+		*/
 	}
 
 }
 
 void DetermineLaneChangeValue(long * long_value)
 {
-	if (DataMap[VehicleID].level_shift == Human_Control)
+	if (DataMap[VehicleID].getLevelShiftLaneChange() == TransitionToAuto_Control || DataMap[VehicleID].getLevelShiftLaneChange() == TransitionToHuman_Control) {
+		*long_value = active_lane_change;
+		DataMap[VehicleID].active_lane_change = active_lane_change;
+		lane_change_for_SAE_level = active_lane_change;
+	} 
+	else if (DataMap[VehicleID].getLevelShiftLaneChange() == Human_Control)
 	{
-		if (current_time > DataMap[VehicleID].time_to_shift) {
-			*long_value = active_lane_change;
-			DataMap[VehicleID].active_lane_change = active_lane_change;
-			lane_change_for_SAE_level = active_lane_change;
-
-		}
-		else
-			CalculateAutomatedLaneChange(long_value);
+		CalculateAutomatedLaneChange(long_value);
 	}
-	else if (DataMap[VehicleID].level_shift == Automated_Control)
+	else if (DataMap[VehicleID].getLevelShiftLaneChange() == Automated_Control)
 	{
-		if (current_time > DataMap[VehicleID].time_to_shift)
-			CalculateAutomatedLaneChange(long_value);
-		else
-		{
-			*long_value = active_lane_change;
-			DataMap[VehicleID].active_lane_change = active_lane_change;
-			lane_change_for_SAE_level = active_lane_change;
-		}
+		CalculateAutomatedLaneChange(long_value);
 	}
 
 }
@@ -372,12 +389,10 @@ void CalculateAutomatedLaneChange(long* long_value)
 
 	number_of_lanes = DataMap[VehicleID].getLaneCount();
 
-	if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
-		if (vehicleLaneChangeMap[VehicleID] != 0) {
-			*long_value = vehicleLaneChangeMap[VehicleID];
-			DataMap[VehicleID].active_lane_change = *long_value;
-			return;
-		}
+	if (DataMap[VehicleID].getVehicleChange() != 0) {
+		*long_value = DataMap[VehicleID].getVehicleChange();
+		DataMap[VehicleID].active_lane_change = *long_value;
+		return;		
 	}
 
 	if (number_of_lanes == 1 || DataMap[vehicle_ID_current_upstrm].Lane_change_in_progress == true
@@ -463,6 +478,7 @@ void CalculateAutomatedLaneChange(long* long_value)
 		acc_idm_left_self = 0;
 		lane_change_to_left = 0;
 	}
+	
 	if (cur_veh_lane == 1 /*&& DataMap[vehicle_ID_right_upstrm].Lane_change_in_progress == false
 						  && DataMap[vehicle_ID_right_downstrm].Lane_change_in_progress == false*/)
 	{
@@ -551,22 +567,17 @@ void CalculateAutomatedLaneChange(long* long_value)
 		}
 	}
 	else {
-		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
-			*long_value = vehicleLaneChangeMap[VehicleID];
-			DataMap[VehicleID].active_lane_change = *long_value;
-			lane_change_for_SAE_level = *long_value;
-		}
-		else {
-			*long_value = 0;
-			DataMap[VehicleID].active_lane_change = 0;
-			lane_change_for_SAE_level = 0;
-		}
+		*long_value = DataMap[VehicleID].getVehicleChange();
+		DataMap[VehicleID].active_lane_change = *long_value;
+		lane_change_for_SAE_level = *long_value;
 	}
-#if defined(SAE0_CAR) || defined(SAE0_TRUCK) || defined(SAE1_CAR) || defined(SAE1_TRUCK) || defined(SAE2_CAR) || defined(SAE2_TRUCK)
-	//if (false == utils::NormalDistribution::flipCoinWithProbability(LANE_CHANGE_PROBABILITY))
-	//	*long_value = 0;
-#endif
-	vehicleLaneChangeMap[VehicleID] = *long_value;
+
+	/*if (DataMap[VehicleID].getLevelShiftLaneChange() == Human_Control || DataMap[VehicleID].getLevelShiftLaneChange() == TransitionToAuto_Control) {
+		if (false == utils::NormalDistribution::flipCoinWithProbability(LANE_CHANGE_PROBABILITY))
+			*long_value = 0;
+	}*/
+
+	DataMap[VehicleID].setVehicleChange(*long_value);
 	//*long_value = (rand() % 3) - 1;
 }/*==========================================================================*/
 
@@ -654,6 +665,10 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		if (vehicle_desired_vel_array.size() < vehicle_identity + 1)
 			vehicle_desired_vel_array.resize(vehicle_identity + 1);
 		vehicle_desired_vel_array[vehicle_identity] = double_value;
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+		if (!DataMap[VehicleID].isTransitionOddZoneGoingOn())
+			DataMap[VehicleID].setDesiredVelocityIntial(desired_velocity);
+#endif
 		return 1;
 	case DRIVER_DATA_VEH_X_COORDINATE:
 		x_coordinate = double_value;
@@ -670,6 +685,21 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 				DataMap[VehicleID].Volume_set = true;
 			}
 		}
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+		{
+			DataMap[VehicleID].x_coordinate = double_value;
+			bool isWithinOddZone = DataMap[VehicleID].isCoordinateWithinOddZone(x_coordinate, y_coordinate);
+			if (isWithinOddZone && !DataMap[VehicleID].isTransitionOddZoneGoingOn()) {
+				DataMap[VehicleID].setTransitionOddZone(true);
+				DataMap[VehicleID].setDesiredVelocityFinal(DataMap[VehicleID].getDesiredVelocityInitial() / 3);
+				DataMap[VehicleID].setDesiredVelocityStep(DataMap[VehicleID].current_velocity);
+			}
+			else if (!isWithinOddZone) {
+				DataMap[VehicleID].setTransitionOddZone(false);
+			}
+		}
+#endif
+		return 1;
 
 	case DRIVER_DATA_VEH_Y_COORDINATE:
 		y_coordinate = double_value;
@@ -683,14 +713,15 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 		return 1;
 	case DRIVER_DATA_VEH_CURRENT_LINK:
 		cur_link = long_value;
-		return 0; /* (To avoid getting sent lots of DRIVER_DATA_VEH_NEXT_LINKS messages) */
+		DataMap[VehicleID].setCurLink(long_value);
+		return 1; /* (To avoid getting sent lots of DRIVER_DATA_VEH_NEXT_LINKS messages) */
 				  /* Must return 1 if these messages are to be sent from VISSIM!         */
 	case DRIVER_DATA_VEH_NEXT_LINKS:
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		if (active_lane_change != 0 && long_value == 0)
-			active_lane_change = 0;
-		vehicleLaneChangeMap[VehicleID] = long_value;
+		if (DataMap[VehicleID].getVehicleChange() == 0 && long_value != 0)
+			break;
+		DataMap[VehicleID].setVehicleChange(long_value);
 		break;
 	case DRIVER_DATA_VEH_REL_TARGET_LANE:
 	case DRIVER_DATA_NVEH_ID:
@@ -809,7 +840,8 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 	case DRIVER_DATA_NVEH_CATEGORY:
 	case DRIVER_DATA_NVEH_LANE_CHANGE:
 	case DRIVER_DATA_NO_OF_LANES:
-		number_of_lanes = index2;
+		number_of_lanes = long_value;
+		DataMap[VehicleID].setLaneCount(long_value);
 		return 1;
 	case DRIVER_DATA_LANE_WIDTH:
 	case DRIVER_DATA_LANE_END_DISTANCE:
@@ -835,8 +867,19 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 			active_lane_change = long_value;
 		else
 			active_lane_change = long_value;
-		vehicleLaneChangeMap[VehicleID] = long_value;
-
+	/*	if (vehicleLaneChangeMap[VehicleID] == 0)
+		{
+			if (long_value == 0)
+				vehicleLaneChangeMap[VehicleID] = long_value;
+			else
+			{
+				if (false == utils::NormalDistribution::flipCoinWithProbability(LANE_CHANGE_PROBABILITY))
+					vehicleLaneChangeMap[VehicleID] = 0;
+				else 
+					vehicleLaneChangeMap[VehicleID] = long_value;
+			}
+		}*/
+		//vehicleLaneChangeMap[VehicleID] = long_value;
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		rel_target_lane = long_value;

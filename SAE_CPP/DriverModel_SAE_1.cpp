@@ -14,7 +14,6 @@
 #include <random>
 #include <chrono>
 
-extern std::map<int, long> vehicleLaneChangeMap;
 ///*==========================================================================*/
 
 BOOL APIENTRY DllMain(HANDLE  hModule,
@@ -71,15 +70,12 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 		return 1;
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
 		
-		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
-			if (vehicleLaneChangeMap[VehicleID] != 0)
+		if (DataMap[VehicleID].getVehicleChange() !=  0) {
 				*double_value = desired_angle;
-			else
-				//*double_value = desired_angle;
-				DetermineLatPosValue(double_value);
+			//*double_value = desired_angle;
+			//	DetermineLatPosValue(double_value);
 			/*lane_change_in_progress = 1;*/
 		}
-
 		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
 		{
 			*double_value = desired_angle;
@@ -91,7 +87,13 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-		*long_value = active_lane_change;
+		//*long_value = active_lane_change;
+		if (DataMap[VehicleID].getVehicleChange() == 0) {
+			*long_value = 0;
+		}
+		else {
+			DetermineLaneChangeValue(long_value);
+		}
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		*long_value = rel_target_lane;
@@ -129,3 +131,5 @@ DRIVERMODEL_API  int  DriverModelExecuteCommand(long number)
 /*  Ende of DriverModel.cpp                                                 */
 /*==========================================================================*/
 
+/* Specialized Implementation */
+Level_Shift_t levelShiftDef = { Fixed_Auto, Fixed_Human, Fixed_Human };

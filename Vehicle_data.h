@@ -3,7 +3,26 @@
 #include <stdint.h>
 #include <map>
 #include <vector>
-enum Level_Shift { Human_Control = 1, Automated_Control = 0 };
+enum Level_Shift { 
+	Automated_Control = 0,
+	TransitionToAuto_Control,
+	Human_Control,
+	TransitionToHuman_Control,
+};
+
+
+enum Fixed_Level_Shift {
+	Fixed_Auto = 0,
+	Fixed_Human,
+	Fixed_Init_Human_Transition_Allowed,
+	Fixed_Init_Auto_Transition_Allowed
+};
+
+typedef struct Level_Shift_s {
+	Fixed_Level_Shift acceleration;
+	Fixed_Level_Shift laneCentering;
+	Fixed_Level_Shift laneChange;
+}Level_Shift_t;
 //structure to contain per-vehicle data from the simulation
 
 enum SignalState {
@@ -16,6 +35,15 @@ enum SignalState {
 //structure to contain per-vehicle data from the simulation
 class VehicleData
 {
+	long vehicleChange;
+	Level_Shift_t levelShiftDefaults;
+	bool isShiftControlAccPending;
+	bool isShiftControlLaneCenteringPending;
+	bool isShiftControlLaneChangePending;
+public:
+	double reaction_time_take_control;
+	double reaction_time_give_control;
+private:
 	double a;
 	double b;
 	int curLaneCount;
@@ -66,8 +94,14 @@ public:
 	double y2;
 	double y3;
 	double future_lateral_position;
-	Level_Shift level_shift;
-	double time_to_shift;
+private:
+	Level_Shift level_shift_acc;
+	Level_Shift level_shift_lanecentering;
+	Level_Shift level_shift_lanechange;
+	double acc_time_to_shift;
+	double lane_centering_time_to_shift;
+	double lane_change_time_to_shift;
+public:
 	double Time_of_completion_of_lane_change;
 	double Time_of_change_of_control_on_lane_angle;
 	bool decided_to_stop_at_signal;
@@ -98,6 +132,34 @@ public:
 	long getCurLink();
 	void setCurLane(long curLane);
 	long getCurLane();
+	void setNextAccTransitionTime(double time_to_shift);
+	void setNextLaneCenteringTransitionTime(double time_to_shift);
+	void setNextLaneChangeTransitionTime(double time_to_shift);
+	bool isAccTransitionPending();
+	bool isLaneCenteringTransitionPending();
+	bool isLaneChangeTransitionPending();
+	double getAccTimeToShift();
+	double getLaneCenteringTimeToShift();
+	double getLaneChangeTimeToShift();
+	void notifyPendingAccTranstionComplete();
+	void updateControlAccTransition(double current_time);
+	void notifyPendingLaneCenteringTranstionComplete();
+	void updateControlLaneCenteringTransition(double current_time);
+	void notifyPendingLaneChangeTranstionComplete();
+	void updateControlLaneChangeTransition(double current_time);
+	void setLevelShiftAcc(Level_Shift ls);
+	Level_Shift getLevelShiftAcc();
+	void setLevelShiftLaneCentering(Level_Shift ls);
+	Level_Shift getLevelShiftLaneCentering();
+	void setLevelShiftLaneChange(Level_Shift ls);
+	Level_Shift getLevelShiftLaneChange();
+	void initLevelShifts();
+	Fixed_Level_Shift getDefaultAccLevelShift();
+	Fixed_Level_Shift getDefaultLaneCenteringLevelShift();
+	Fixed_Level_Shift getDefaultLaneChangeLevelShift();
+
+	void setVehicleChange(long direction);
+	long getVehicleChange();
 
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
 	void setDesiredVelocityIntial(double value);

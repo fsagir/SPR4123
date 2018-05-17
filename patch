@@ -1,0 +1,27 @@
+diff --git a/DataMap.cpp b/DataMap.cpp
+index ed37e28..eee572e 100644
+--- a/DataMap.cpp
++++ b/DataMap.cpp
+@@ -123,7 +123,8 @@ void DataSetValue(long   type,
+ 
+ 		break;
+ 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
+-		if (lane_change_for_SAE_level != 0)
++		DataMap[VehicleID].active_lane_change = long_value;
++		if (DataMap[VehicleID].active_lane_change != 0)
+ 		{
+ 			if (DataMap[VehicleID].Lane_change_in_progress == false)
+ 			{
+diff --git a/Simulation_Data.cpp b/Simulation_Data.cpp
+index 9de8194..b43e491 100644
+--- a/Simulation_Data.cpp
++++ b/Simulation_Data.cpp
+@@ -81,7 +81,7 @@ double  acc_cah = 0.0;
+ double  acc_acc = 0.0;
+ double  effective_acc = 0.0;
+ long    heaviside_step = 0;
+-double  c = 0.99;
++double  c = 0.1;
+ double  b_safe = 4.0;
+ double  time_ln_ch = 0.0;
+ int     vehicle_ID_left_upstrm = 0;

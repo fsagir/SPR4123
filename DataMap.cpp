@@ -10,12 +10,12 @@
 #include <ctime>	//time functions
 #include <random>
 #include <chrono>
+#include <Utils.h>
 
 double k = 0.0;
 
 //Implemention of extern variable in Vehicle_data.h
 std::map<int, VehicleData> DataMap; //This stores the vehicle data
-extern std::map<int, long> vehicleLaneChangeMap;
 
 //Datasetvalue function implementation (details can be found in Vehicle_data.h)
 void DataSetValue(long   type,
@@ -39,6 +39,55 @@ void DataSetValue(long   type,
 		break;
 	case DRIVER_DATA_TIME:
 		DataMap[VehicleID].current_time = double_value;
+		DataMap[VehicleID].updateControlAccTransition(double_value);
+		DataMap[VehicleID].updateControlLaneCenteringTransition(double_value);
+		DataMap[VehicleID].updateControlLaneChangeTransition(double_value);
+
+		if (DataMap[VehicleID].getDefaultAccLevelShift() != Fixed_Human && DataMap[VehicleID].getDefaultAccLevelShift() != Fixed_Auto) {
+			if (!DataMap[VehicleID].isAccTransitionPending()) {
+				if (DataMap[VehicleID].getCurLink() == 0)
+					break;
+				else if (utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) && DataMap[VehicleID].getLevelShiftAcc() != Automated_Control) {
+					DataMap[VehicleID].setNextAccTransitionTime(DataMap[VehicleID].current_time);
+				}
+				else if (!utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) &&
+						DataMap[VehicleID].getLevelShiftAcc() == Automated_Control) {
+					DataMap[VehicleID].setNextAccTransitionTime(DataMap[VehicleID].current_time);
+				}
+			}
+		}
+
+		if (DataMap[VehicleID].getDefaultLaneCenteringLevelShift() != Fixed_Human && DataMap[VehicleID].getDefaultLaneCenteringLevelShift() != Fixed_Auto) {
+			if (!DataMap[VehicleID].isLaneCenteringTransitionPending()) {
+				if (DataMap[VehicleID].getCurLink() == 0)
+					break;
+				else if (utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) && 
+						DataMap[VehicleID].getLevelShiftLaneCentering() != Automated_Control) {
+					DataMap[VehicleID].setNextLaneCenteringTransitionTime(DataMap[VehicleID].current_time);
+				}
+				else if (!utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) &&
+						DataMap[VehicleID].getLevelShiftLaneCentering() == Automated_Control) {
+					DataMap[VehicleID].setNextLaneCenteringTransitionTime(DataMap[VehicleID].current_time);
+				}
+			}
+		}
+
+		if (DataMap[VehicleID].getDefaultLaneChangeLevelShift() != Fixed_Human && DataMap[VehicleID].getDefaultLaneChangeLevelShift() != Fixed_Auto) {
+			if (!DataMap[VehicleID].isLaneChangeTransitionPending()) {
+				if (DataMap[VehicleID].getCurLink() == 0)
+					break;
+				else if (utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) &&
+						DataMap[VehicleID].getLevelShiftLaneChange() != Automated_Control) {
+					DataMap[VehicleID].setNextLaneChangeTransitionTime(DataMap[VehicleID].current_time);
+				}
+				else if (!utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]) &&
+						DataMap[VehicleID].getLevelShiftLaneChange() == Automated_Control) {
+					DataMap[VehicleID].setNextLaneChangeTransitionTime(DataMap[VehicleID].current_time);
+				}
+			}
+		}
+
+		/*
 #if defined(SAE5_CAR) || defined(SAE5_TRUCK)
 		DataMap[VehicleID].level_shift = Automated_Control;
 		break;
@@ -49,27 +98,38 @@ void DataSetValue(long   type,
 		
 			break;
 		}
-#if defined(SAE4_CAR) || defined(SAE4_TRUCK)
+#if defined(SAE4_CAR) || defined(SAE4_TRUCK) || defined(SAE5_CAR) || defined(SAE5_TRUCK)
 		else
 		{
 			DataMap[VehicleID].level_shift = Automated_Control;
 			break;
 		}
 #else
-		if (DataMap[VehicleID].level_shift == Automated_Control && DataMap[VehicleID].current_velocity > 35)
+#if defined(SAE3_CAR)
+		if (!utils::NormalDistribution::isVehicleOnHighway(&DataMap[VehicleID]))
+#else
+		if (DataMap[VehicleID].level_shift == Automated_Control )
+#endif
 		{
-			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + reaction_time;
-			DataMap[VehicleID].level_shift = Human_Control;
+			if (DataMap[VehicleID].level_shift == Automated_Control) {
+				DataMap[VehicleID].setNextTransitionTime(DataMap[VehicleID].current_time + DataMap[VehicleID].reaction_time_take_control);
+				DataMap[VehicleID].level_shift = Human_Control;
+			}
 		}
-		//check to see if we are under human control and below 17.9 m/s speed limit
-		if (DataMap[VehicleID].level_shift == Human_Control && DataMap[VehicleID].current_velocity < 35)
+#if defined(SAE3_CAR)
+		else
+#else
+		
+		if (DataMap[VehicleID].level_shift == Human_Control )
+#endif
 		{
-			DataMap[VehicleID].time_to_shift = DataMap[VehicleID].current_time + 2 * reaction_time;
-			DataMap[VehicleID].level_shift = Automated_Control;
-
+			if (DataMap[VehicleID].level_shift == Human_Control) {
+				DataMap[VehicleID].setNextTransitionTime(DataMap[VehicleID].current_time + DataMap[VehicleID].reaction_time_give_control);
+				DataMap[VehicleID].level_shift = Automated_Control;
+			}
 		}
 #endif
-
+*/
 		break;
 	case DRIVER_DATA_VEH_VELOCITY:
 		DataMap[VehicleID].current_velocity = double_value;
@@ -123,19 +183,17 @@ void DataSetValue(long   type,
 
 		break;
 	case DRIVER_DATA_VEH_ACTIVE_LANE_CHANGE:
-		if (vehicleLaneChangeMap.find(VehicleID) != vehicleLaneChangeMap.end()) {
-			if (!DataMap[VehicleID].Lane_change_in_progress && vehicleLaneChangeMap[VehicleID] != 0) {
-				DataMap[VehicleID].Change_volume = 1;
-				DataMap[VehicleID].Lane_change_in_progress = true;
-			}
-			else if (DataMap[VehicleID].Lane_change_in_progress && vehicleLaneChangeMap[VehicleID] != 0) {
-				DataMap[VehicleID].Change_volume = 0;
-				DataMap[VehicleID].Lane_change_in_progress = true;
-			}
-			else {
-				DataMap[VehicleID].Change_volume = 0;
-				DataMap[VehicleID].Lane_change_in_progress = false;
-			}
+		if (!DataMap[VehicleID].Lane_change_in_progress && DataMap[VehicleID].getVehicleChange() != 0) {
+			DataMap[VehicleID].Change_volume = 1;
+			DataMap[VehicleID].Lane_change_in_progress = true;
+		}
+		else if (DataMap[VehicleID].Lane_change_in_progress && DataMap[VehicleID].getVehicleChange() != 0) {
+			DataMap[VehicleID].Change_volume = 0;
+			DataMap[VehicleID].Lane_change_in_progress = true;
+		}
+		else {
+			DataMap[VehicleID].Change_volume = 0;
+			DataMap[VehicleID].Lane_change_in_progress = false;
 		}
 		break;
 	case DRIVER_DATA_VEH_LANE_ANGLE:
@@ -249,7 +307,11 @@ void StoreVehicleFrame(VehicleData & DataPoint)
 			<< DataPoint.Change_volume << ','
 			<< DataPoint.Cur_veh_angle << ','
 			<< DataPoint.lateral_position << ','
-
+			<< DataPoint.Lane_change_in_progress << ','
+			<< VehicleData::Volume << ','
+			<< DataMap[VehicleID].getLevelShiftAcc() << ','
+			<< DataMap[VehicleID].getLevelShiftLaneCentering() << ','
+			<< DataMap[VehicleID].getLevelShiftLaneChange() << ','
 			<< '\n';
 		//Take resulting stream and save to a single String.
 		std::string output = SS.str();
@@ -284,8 +346,12 @@ void StoreSituationData(int Veh)
 		<<lateral_position<<','
 		<< cur_link << ','
 		<< cur_veh_lane << ','
-		<< DataMap[VehicleID].level_shift<<','
-		<< DataMap[VehicleID].time_to_shift<<','
+		<< DataMap[VehicleID].getLevelShiftAcc() <<','
+		<< DataMap[VehicleID].getLevelShiftLaneCentering() << ','
+		<< DataMap[VehicleID].getLevelShiftLaneChange() << ','
+		<< DataMap[VehicleID].getAccTimeToShift() + DataMap[VehicleID].reaction_time_give_control <<','
+		<< DataMap[VehicleID].getLaneCenteringTimeToShift() + DataMap[VehicleID].reaction_time_give_control << ','
+		<< DataMap[VehicleID].getLaneChangeTimeToShift() + DataMap[VehicleID].reaction_time_give_control << ','
 		<<current_time<<','
 		//<< pow(space_ratio,2) << ','
 		//<< acc_acc << ','
@@ -302,26 +368,30 @@ void StoreSituationData(int Veh)
 }
 
 
+extern Level_Shift_t levelShiftDef;
 //Implementation of constructor
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
-VehicleData::VehicleData() : a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), isOddZoneTransitionActive(false), desired_velocity_initial(0), desired_velocity_final(0), desired_velocity_current(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
+VehicleData::VehicleData() : vehicleChange(0), levelShiftDefaults(levelShiftDef), isShiftControlAccPending(false), isShiftControlLaneCenteringPending(false), isShiftControlLaneChangePending(false), reaction_time_take_control(0.0), reaction_time_give_control(0.0), a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), isOddZoneTransitionActive(false), desired_velocity_initial(0), desired_velocity_final(0), desired_velocity_current(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
 #else
-VehicleData::VehicleData() : a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
+VehicleData::VehicleData() : vehicleChange(0), levelShiftDefaults(levelShiftDef), isShiftControlAccPending(false), isShiftControlLaneCenteringPending(false), isShiftControlLaneChangePending(false), reaction_time_take_control(0.0), reaction_time_give_control(0.0), a(0.0), b(0.0), curLaneCount(1), distanceFromSignal(-1), signalState(SIGNAL_STATE_OFF), curLink(0), curLane(0), Initial_Lane(0), Change_volume(0), lane_set(false), Volume_set(false), link_set(false), final_link_set(false), Initial_link(0), final_link(0), Lane_change_in_progress(false), decided_to_stop_at_signal(false), decided_to_yeild(false)
 #endif
 {
 	y1 = 0;
 	y2 = 0;
 	y3 = 0;
 	future_lateral_position = 0;
-	level_shift = Automated_Control;
-	time_to_shift = 0.0;
+	this->acc_time_to_shift = this->lane_centering_time_to_shift = this->lane_change_time_to_shift = 0.0;
 	Time_of_completion_of_lane_change = 0.0;
 	Time_of_change_of_control_on_lane_angle = 0.0;
 	deceleration_at_signal = 0.0;
-	/*a = utils::NormalDistribution::getTruncatedLogNormalDouble(A_VD_MEAN, A_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
-	b = utils::NormalDistribution::getTruncatedLogNormalDouble(B_VD_MEAN, B_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());*/
-	a = 1.4;
-	b = 2;
+	a = utils::NormalDistribution::getTruncatedLogNormalDouble(A_VD_MEAN, A_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
+	b = utils::NormalDistribution::getTruncatedLogNormalDouble(B_VD_MEAN, B_VD_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
+#if defined(SAE3_CAR)
+	reaction_time_take_control = utils::NormalDistribution::getTruncatedLogNormalDouble(REACTION_TIME_AUTO_2_HUMAN_MEAN, REACTION_TIME_AUTO_2_HUMAN_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
+	reaction_time_give_control = utils::NormalDistribution::getTruncatedLogNormalDouble(REACTION_TIME_AUTO_2_HUMAN_MEAN, REACTION_TIME_AUTO_2_HUMAN_VARIENCE, utils::DistributionTruncationFrom_0_To_5());
+#endif
+	//a = 1.4;
+	//b = 2;
 	/*a = 1.5;*/
 	deceleration_to_yeild = 0.0;
 	x_coordinate_rear = 0.0;
@@ -329,9 +399,53 @@ VehicleData::VehicleData() : a(0.0), b(0.0), curLaneCount(1), distanceFromSignal
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
 	initOddZones();
 #endif
+	initLevelShifts();
+}
+
+Fixed_Level_Shift VehicleData::getDefaultAccLevelShift() {
+	return this->levelShiftDefaults.acceleration;
+}
+
+Fixed_Level_Shift VehicleData::getDefaultLaneCenteringLevelShift() {
+	return this->levelShiftDefaults.laneCentering;
+}
+
+Fixed_Level_Shift VehicleData::getDefaultLaneChangeLevelShift() {
+	return this->levelShiftDefaults.laneChange;
+}
+
+void VehicleData::setVehicleChange(long direction) {
+	vehicleChange = direction;
+}
+long VehicleData::getVehicleChange() {
+	return vehicleChange;
+}
+
+
+void VehicleData::initLevelShifts() {
+	if (levelShiftDefaults.acceleration == Fixed_Auto || levelShiftDefaults.acceleration == Fixed_Init_Auto_Transition_Allowed)
+		level_shift_acc = Automated_Control;
+	else if (levelShiftDefaults.acceleration == Fixed_Human || levelShiftDefaults.acceleration == Fixed_Init_Human_Transition_Allowed)
+		level_shift_acc = Human_Control;
+
+	if (levelShiftDefaults.laneCentering == Fixed_Auto || levelShiftDefaults.laneCentering == Fixed_Init_Auto_Transition_Allowed)
+		level_shift_lanecentering = Automated_Control;
+	else if (levelShiftDefaults.laneCentering == Fixed_Human || levelShiftDefaults.laneCentering == Fixed_Init_Human_Transition_Allowed)
+		level_shift_lanecentering = Human_Control;
+
+	if (levelShiftDefaults.laneChange == Fixed_Auto || levelShiftDefaults.laneChange == Fixed_Init_Auto_Transition_Allowed)
+		level_shift_lanechange = Automated_Control;
+	else if (levelShiftDefaults.laneChange == Fixed_Human || levelShiftDefaults.laneChange == Fixed_Init_Human_Transition_Allowed)
+		level_shift_lanechange = Human_Control;
 }
 
 VehicleData::VehicleData(const VehicleData & oldObj) {
+	levelShiftDefaults = oldObj.levelShiftDefaults;
+	isShiftControlAccPending = oldObj.isShiftControlAccPending;
+	this->isShiftControlLaneCenteringPending = oldObj.isShiftControlLaneCenteringPending;
+	this->isShiftControlLaneChangePending = oldObj.isShiftControlLaneChangePending;
+	reaction_time_give_control = oldObj.reaction_time_give_control;
+	reaction_time_take_control = oldObj.reaction_time_take_control;
 	a = oldObj.a;
 	b = oldObj.b;
 	curLaneCount = oldObj.curLaneCount;
@@ -375,8 +489,12 @@ VehicleData::VehicleData(const VehicleData & oldObj) {
 	y2 = oldObj.y2;
 	y3 = oldObj.y3;
 	future_lateral_position = oldObj.future_lateral_position;
-	level_shift = oldObj.level_shift;
-	time_to_shift = oldObj.time_to_shift;
+	level_shift_acc = oldObj.level_shift_acc;
+	level_shift_lanecentering = oldObj.level_shift_lanecentering;
+	level_shift_lanechange = oldObj.level_shift_lanechange;
+	acc_time_to_shift = oldObj.acc_time_to_shift;
+	this->lane_centering_time_to_shift = oldObj.lane_centering_time_to_shift;
+	this->lane_change_time_to_shift = oldObj.lane_change_time_to_shift;
 	Time_of_completion_of_lane_change = oldObj.Time_of_completion_of_lane_change;
 	Time_of_change_of_control_on_lane_angle = oldObj.Time_of_change_of_control_on_lane_angle;
 	decided_to_stop_at_signal = oldObj.decided_to_stop_at_signal;
@@ -390,9 +508,220 @@ VehicleData::VehicleData(const VehicleData & oldObj) {
 	width = oldObj.width;
 }
 
+void VehicleData::setLevelShiftAcc(Level_Shift ls) {
+	if (this->levelShiftDefaults.acceleration == Fixed_Init_Auto_Transition_Allowed || this->levelShiftDefaults.acceleration == Fixed_Init_Human_Transition_Allowed)
+		this->level_shift_acc = ls;
+}
+
+Level_Shift VehicleData::getLevelShiftAcc() {
+	if (this->levelShiftDefaults.acceleration == Fixed_Auto)
+		return Automated_Control;
+	if (this->levelShiftDefaults.acceleration == Fixed_Human)
+		return Human_Control;
+	return this->level_shift_acc;
+}
+
+void VehicleData::setLevelShiftLaneCentering(Level_Shift ls) {
+	if (this->levelShiftDefaults.laneCentering == Fixed_Init_Auto_Transition_Allowed || this->levelShiftDefaults.laneCentering == Fixed_Init_Human_Transition_Allowed)
+		this->level_shift_lanecentering = ls;
+}
+
+Level_Shift VehicleData::getLevelShiftLaneCentering() {
+	if (this->levelShiftDefaults.laneCentering == Fixed_Auto)
+		return Automated_Control;
+	if (this->levelShiftDefaults.laneCentering == Fixed_Human)
+		return Human_Control;
+	return this->level_shift_lanecentering;
+}
+
+void VehicleData::setLevelShiftLaneChange(Level_Shift ls) {
+	if (this->levelShiftDefaults.laneChange == Fixed_Init_Auto_Transition_Allowed || this->levelShiftDefaults.laneChange == Fixed_Init_Human_Transition_Allowed)
+		this->level_shift_lanechange = ls;
+}
+
+Level_Shift VehicleData::getLevelShiftLaneChange() {
+	if (this->levelShiftDefaults.laneChange == Fixed_Auto)
+		return Automated_Control;
+	if (this->levelShiftDefaults.laneChange == Fixed_Human)
+		return Human_Control;
+	return this->level_shift_lanechange;
+}
+
+void VehicleData::setNextAccTransitionTime(double time_to_shift) {
+	this->acc_time_to_shift = time_to_shift;
+	this->isShiftControlAccPending = true;
+}
+
+void VehicleData::setNextLaneCenteringTransitionTime(double time_to_shift) {
+	this->lane_centering_time_to_shift = time_to_shift;
+	isShiftControlLaneCenteringPending = true;
+}
+
+void VehicleData::setNextLaneChangeTransitionTime(double time_to_shift) {
+	this->lane_change_time_to_shift = time_to_shift;
+	isShiftControlLaneChangePending = true;
+}
+
+double VehicleData::getAccTimeToShift() {
+	return this->acc_time_to_shift;
+}
+
+double VehicleData::getLaneCenteringTimeToShift() {
+	return this->lane_centering_time_to_shift;
+}
+
+double VehicleData::getLaneChangeTimeToShift() {
+	return this->lane_change_time_to_shift;
+}
+
+bool VehicleData::isAccTransitionPending() {
+	return isShiftControlAccPending;
+}
+
+bool VehicleData::isLaneCenteringTransitionPending() {
+	return this->isShiftControlLaneCenteringPending;
+}
+
+bool VehicleData::isLaneChangeTransitionPending() {
+	return this->isShiftControlLaneChangePending;
+}
+
+void VehicleData::updateControlAccTransition(double current_time) {
+	if (isAccTransitionPending()) {
+		if (current_time >= this->acc_time_to_shift) {
+			switch (this->level_shift_acc) {
+			case Human_Control:
+			case TransitionToAuto_Control:
+				if (this->levelShiftDefaults.acceleration != Fixed_Auto && this->levelShiftDefaults.acceleration != Fixed_Human)
+					this->level_shift_acc = TransitionToAuto_Control;
+				else {
+					notifyPendingAccTranstionComplete();
+					return;
+				}
+				if (current_time >= this->acc_time_to_shift + reaction_time_give_control) {
+					level_shift_acc = Automated_Control;
+					notifyPendingAccTranstionComplete();
+				}
+				break;
+			case Automated_Control:
+			case TransitionToHuman_Control:
+				this->level_shift_acc = TransitionToHuman_Control;
+				if (current_time >= this->acc_time_to_shift + reaction_time_take_control) {
+					this->level_shift_acc = Human_Control;
+					notifyPendingAccTranstionComplete();
+				}
+				break;
+			default:
+				notifyPendingAccTranstionComplete();
+				break;
+			}
+		}
+	}
+}
+
+void VehicleData::notifyPendingAccTranstionComplete() {
+	isShiftControlAccPending = false;
+	switch (level_shift_acc)
+	{
+	case TransitionToAuto_Control:
+		level_shift_acc = Automated_Control;
+		break;
+	case TransitionToHuman_Control:
+		level_shift_acc = Human_Control;
+	default:
+		break;
+	}
+}
+
+void VehicleData::updateControlLaneCenteringTransition(double current_time) {
+	if (isLaneCenteringTransitionPending()) {
+		if (current_time >= this->lane_centering_time_to_shift) {
+			switch (this->level_shift_lanecentering) {
+			case Human_Control:
+			case TransitionToAuto_Control:
+				if (this->levelShiftDefaults.laneCentering != Fixed_Auto && this->levelShiftDefaults.laneCentering != Fixed_Human)
+					this->level_shift_lanecentering = TransitionToAuto_Control;
+				if (current_time >= this->lane_centering_time_to_shift + reaction_time_give_control) {
+					level_shift_lanecentering = Automated_Control;
+					notifyPendingLaneCenteringTranstionComplete();
+				}
+				break;
+			case Automated_Control:
+			case TransitionToHuman_Control:
+				this->level_shift_lanecentering = TransitionToHuman_Control;
+				if (current_time >= lane_centering_time_to_shift + reaction_time_take_control) {
+					this->level_shift_lanecentering = Human_Control;
+					notifyPendingLaneCenteringTranstionComplete();
+				}
+				break;
+			default:
+				notifyPendingLaneCenteringTranstionComplete();
+				break;
+			}
+		}
+	}
+}
+
+void VehicleData::notifyPendingLaneCenteringTranstionComplete() {
+	isShiftControlLaneCenteringPending = false;
+	switch (level_shift_lanecentering)
+	{
+	case TransitionToAuto_Control:
+		level_shift_lanecentering = Automated_Control;
+		break;
+	case TransitionToHuman_Control:
+		level_shift_lanecentering = Human_Control;
+	default:
+		break;
+	}
+}
+
+void VehicleData::updateControlLaneChangeTransition(double current_time) {
+	if (isLaneChangeTransitionPending()) {
+		if (current_time >= this->lane_change_time_to_shift) {
+			switch (this->level_shift_lanechange) {
+			case Human_Control:
+			case TransitionToAuto_Control:
+				if (this->levelShiftDefaults.laneChange != Fixed_Auto && this->levelShiftDefaults.laneChange != Fixed_Human)
+					this->level_shift_lanechange = TransitionToAuto_Control;
+				if (current_time >= this->lane_change_time_to_shift + reaction_time_give_control) {
+					level_shift_lanechange = Automated_Control;
+					notifyPendingLaneChangeTranstionComplete();
+				}
+				break;
+			case Automated_Control:
+			case TransitionToHuman_Control:
+				this->level_shift_lanechange = TransitionToHuman_Control;
+				if (current_time >= lane_change_time_to_shift + reaction_time_take_control) {
+					this->level_shift_lanechange = Human_Control;
+					notifyPendingLaneChangeTranstionComplete();
+				}
+				break;
+			default:
+				notifyPendingLaneChangeTranstionComplete();
+				break;
+			}
+		}
+	}
+}
+
+void VehicleData::notifyPendingLaneChangeTranstionComplete() {
+	isShiftControlLaneChangePending = false;
+	switch (level_shift_lanechange)
+	{
+	case TransitionToAuto_Control:
+		level_shift_lanechange = Automated_Control;
+		break;
+	case TransitionToHuman_Control:
+		level_shift_lanechange = Human_Control;
+	default:
+		break;
+	}
+}
+
 #if defined(SAE4_CAR) || defined(SAE4_TRUCK)
 void VehicleData::initOddZones() {
-	oddZones.push_back(std::pair<double, double>(0, 300));
+	oddZones.push_back(std::pair<double, double>(1600, 1920));
 }
 
 void VehicleData::setDesiredVelocityIntial(double value) {
@@ -545,8 +874,12 @@ double VehicleData::LateralDeviation()
 	y3 = y2;
 	y2 = y1;
 	y1 = lateral_position;
-	static const double Gamma0 = 0.63;
+	static const double Gamma0 = 0.0;
+#if defined(SAE2_CAR)
 	static const double Gamma1 = 2.26;
+#else
+	static const double Gamma1 = 100;
+#endif
 	static const double Beta1 = 0.055;
 	static const double Beta2 = 0.47;
 	static const double Beta3 = 0.48;
@@ -559,7 +892,7 @@ double VehicleData::LateralDeviation()
 	if (pt > 0.5)
 		I_t = -1;
 	else
-		I_t = 0;
+		I_t = 1;
 
 	future_lateral_position = Beta1*W1 + Beta2*W2 + Beta3*W3 + RandomValue * I_t;
 	if (lateral_position >= 1.5 || lateral_position <= -1.5 || future_lateral_position >= 1.5 || future_lateral_position <= -1.5)

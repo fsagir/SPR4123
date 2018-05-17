@@ -94,8 +94,7 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-		*long_value = active_lane_change;
-		lane_change_for_SAE_level = active_lane_change;
+		DetermineLaneChangeValue(long_value);
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		*long_value = rel_target_lane;
@@ -133,3 +132,5 @@ DRIVERMODEL_API  int  DriverModelExecuteCommand(long number)
 /*  Ende of DriverModel.cpp                                                 */
 /*==========================================================================*/
 
+/* Specialized Implementation */
+Level_Shift_t levelShiftDef = { Fixed_Auto, Fixed_Auto, Fixed_Human };
