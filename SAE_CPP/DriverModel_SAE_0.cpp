@@ -66,34 +66,35 @@ DRIVERMODEL_API  int  DriverModelGetValue(long   type,
 	case DRIVER_DATA_DESIRED_ACCELERATION:
 
 		CalculateAccChange(double_value);
+
 		return 1;
 		//---------------------------------------------
 		
 	case DRIVER_DATA_DESIRED_LANE_ANGLE:
-		if (active_lane_change != 0) {
+		if (DataMap[VehicleID].getVehicleChange() != 0) {
 			*double_value = desired_angle;
+			//*double_value = desired_angle;
+			//	DetermineLatPosValue(double_value);
 			/*lane_change_in_progress = 1;*/
 		}
-
 		else if (current_time < DataMap[VehicleID].Time_of_change_of_control_on_lane_angle)
 		{
 			*double_value = desired_angle;
 		}
 
 		else {
-			if (DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80 <= 0)
-			{
-				*double_value = max(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, -.2);
-			}
-
-			else
-				*double_value = min(DataMap[VehicleID].Random_value = (DataMap[VehicleID].LateralDeviation() - lateral_position) * 10 / 80, .2);
+			DetermineLatPosValue(double_value);
 		}
 
 		return 1;
 	case DRIVER_DATA_ACTIVE_LANE_CHANGE:
-		*long_value = active_lane_change;
-		lane_change_for_SAE_level = active_lane_change;
+		//*long_value = active_lane_change;
+		if (DataMap[VehicleID].getVehicleChange() == 0) {
+			*long_value = 0;
+		}
+		else {
+			DetermineLaneChangeValue(long_value);
+		}
 		return 1;
 	case DRIVER_DATA_REL_TARGET_LANE:
 		*long_value = rel_target_lane;

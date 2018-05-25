@@ -119,7 +119,8 @@ extern double duration_of_vissim_conrol_on_angle_after_lane_change;
 extern long MOBIL_active_lane_change;
 extern long lane_change_for_SAE_level;
 
-
+extern double distance_from_signal;
+extern long signal_state;
 
 
 void DetrimeAccValue(double * double_value);
@@ -130,3 +131,6 @@ void DetermineLaneChangeValue(long * long_value);
 void CalculateAutomatedLaneChange(long* long_value);
 
 void CalculateAccChange(double * double_value);
+
+void calculate_acceleration(double * double_value);
+void stopping_criteria(double * double_value);

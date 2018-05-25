@@ -312,6 +312,7 @@ void StoreVehicleFrame(VehicleData & DataPoint)
 			<< DataMap[VehicleID].getLevelShiftAcc() << ','
 			<< DataMap[VehicleID].getLevelShiftLaneCentering() << ','
 			<< DataMap[VehicleID].getLevelShiftLaneChange() << ','
+			<< DataMap[VehicleID].relative_distance << ','
 			<< '\n';
 		//Take resulting stream and save to a single String.
 		std::string output = SS.str();

@@ -21,6 +21,8 @@ long    vehicle_color = RGB(0, 0, 0);
 double  current_velocity = 0.0;
 double  current_acceleration = 0.0;
 double  time_step = 0.0;
+double distance_from_signal;
+long signal_state;
 
 //Default values depend on preprocessor Macro (set in project configuration)
 #ifdef SAE0_CAR
@@ -157,7 +159,36 @@ double duration_of_vissim_conrol_on_angle_after_lane_change = 2;
 long MOBIL_active_lane_change = 0;
 long lane_change_for_SAE_level = 0;
 
+void calculate_acceleration(double * double_value)
+{
+	if (signal_state == SIGNAL_STATE_GREEN || distance_from_signal < 0) {
+		if (DataMap[VehicleID].decided_to_stop_at_signal == true) {
+			DataMap[VehicleID].decided_to_stop_at_signal = false;
+		}
+		CalculateAccChange(double_value);
+	}
+	else {
+		if (distance_from_signal < relative_distance)
+			if (DataMap[VehicleID].decided_to_stop_at_signal == false)
+				stopping_criteria(double_value);
+			else
+				*double_value = DataMap[VehicleID].deceleration_at_signal;
+		else
+			CalculateAccChange(double_value);
+	}
+}
 
+void stopping_criteria(double * double_value)
+{
+	if (pow(current_velocity, 2) / (2 * b) > relative_distance)
+		CalculateAccChange(double_value);
+	else
+	{
+		*double_value = -1 * pow(current_velocity, 2) / (2 * (distance_from_signal-5));
+		DataMap[VehicleID].deceleration_at_signal = *double_value;
+		DataMap[VehicleID].decided_to_stop_at_signal = true;
+	}
+}
 
 void CalculateAccChange(double * double_value)
 {
@@ -851,7 +882,13 @@ DRIVERMODEL_API  int  DriverModelSetValue(long   type,
 	case DRIVER_DATA_SLOPE:
 	case DRIVER_DATA_SLOPE_AHEAD:
 	case DRIVER_DATA_SIGNAL_DISTANCE:
+		distance_from_signal = double_value;
+		DataMap[VehicleID].setDistanceFromSignal(double_value);
+		break;
 	case DRIVER_DATA_SIGNAL_STATE:
+		signal_state = long_value;
+		DataMap[VehicleID].setSignalState(long_value);
+		break;
 	case DRIVER_DATA_SIGNAL_STATE_START:
 	case DRIVER_DATA_SPEED_LIMIT_DISTANCE:
 	case DRIVER_DATA_SPEED_LIMIT_VALUE:
